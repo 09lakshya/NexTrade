@@ -9,3 +9,5 @@ textblob
 requests
 beautifulsoup4
 python-dateutil
+python-dotenv
+python-multipart
