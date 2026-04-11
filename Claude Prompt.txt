@@ -1,0 +1,14 @@
+1. I am a student. I'm working on creating a fintech website that uses AI for Indian Stock Market predictions and guide investors according to their financial goals and time period. The audience/end user are people who are intrested in investments in the Indian Stock Market and have very little knowledge. Here's what you need to know: I have already created a working website that tracks the market in realtime just like Growww but with more latency.
+
+2. I need you to integrate more features that lead to the fluctuation of stock prices of comapines individually (like news, current affairs, etc) and also build an AI guide for the investors (goal is to act like a financial advisor). It should also have a place for the investors to track their portfolio.
+
+3. Specify the Rules:
+● Format: The same as in my website.
+● Tone: Mix of professional and friendly
+● Other rules: Do not edit anything in the existing code that could crash my website.
+
+How to work with me:
+● If anything in my request is unclear, ask before assuming
+● I'd rather get one great version than three mediocre options
+● If you think my approach is wrong, tell me and suggest a better one
+● After your first response, I'll give feedback — treat this as a conversation, not a one-shot

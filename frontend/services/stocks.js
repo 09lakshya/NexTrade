@@ -1,0 +1,20 @@
+export const STOCKS = [
+  { symbol: "NIFTY50", name: "Nifty 50" },
+  { symbol: "SENSEX", name: "BSE Sensex" },
+
+  { symbol: "RELIANCE", name: "Reliance Industries Ltd" },
+  { symbol: "TCS", name: "Tata Consultancy Services Ltd" },
+  { symbol: "INFY", name: "Infosys Ltd" },
+  { symbol: "HDFCBANK", name: "HDFC Bank Ltd" },
+  { symbol: "ICICIBANK", name: "ICICI Bank Ltd" },
+  { symbol: "SBIN", name: "State Bank of India" },
+  { symbol: "ITC", name: "ITC Ltd" },
+  { symbol: "LT", name: "Larsen & Toubro Ltd" },
+  { symbol: "AXISBANK", name: "Axis Bank Ltd" },
+  { symbol: "KOTAKBANK", name: "Kotak Mahindra Bank Ltd" },
+  { symbol: "BAJFINANCE", name: "Bajaj Finance Ltd" },
+  { symbol: "ASIANPAINT", name: "Asian Paints Ltd" },
+  { symbol: "MARUTI", name: "Maruti Suzuki India Ltd" },
+  { symbol: "SUNPHARMA", name: "Sun Pharmaceutical Industries Ltd" },
+  { symbol: "WIPRO", name: "Wipro Ltd" },
+];

@@ -1,0 +1,11 @@
+fastapi
+uvicorn
+yfinance
+pandas
+numpy
+redis
+websockets
+textblob
+requests
+beautifulsoup4
+python-dateutil
