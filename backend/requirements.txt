@@ -11,3 +11,6 @@ beautifulsoup4
 python-dateutil
 python-dotenv
 python-multipart
+sqlalchemy
+psycopg2-binary
+alembic

@@ -28,20 +28,30 @@ export default function SearchBar() {
   return (
     <div className="relative w-full max-w-md">
       {/* INPUT */}
-      <div className="glass border border-accent border-opacity-20 rounded-full px-4 py-2 flex items-center gap-2">
-        <span className="text-accent text-lg">🔍</span>
+      <div className="bg-gray-900 bg-opacity-80 border-2 border-cyan-400 border-opacity-60 rounded-lg px-4 py-2 flex items-center gap-2 backdrop-blur-md hover:border-opacity-100 hover:bg-opacity-90 transition-all shadow-lg">
         <input
           type="text"
           value={query}
           onChange={(e) => handleSearch(e.target.value)}
           placeholder="Search stocks..."
-          className="flex-1 bg-transparent text-white outline-none placeholder-gray-500 text-sm"
+          className="flex-1 bg-transparent text-white outline-none placeholder-gray-300 text-base font-medium"
         />
+        {query && (
+          <button
+            onClick={() => {
+              setQuery("");
+              setResults([]);
+            }}
+            className="text-gray-400 hover:text-white transition-colors cursor-pointer text-lg"
+          >
+            ✕
+          </button>
+        )}
       </div>
 
       {/* DROPDOWN */}
       {results.length > 0 && (
-        <div className="absolute top-full left-0 w-full mt-3 glass border border-accent border-opacity-20 z-[9999] rounded-2xl overflow-hidden shadow-premium-lg">
+        <div className="absolute top-full left-0 w-full mt-3 bg-gray-950 border border-cyan-400 z-[9999] rounded-2xl overflow-hidden shadow-2xl">
           {results.map((stock) => (
             <div
               key={stock}
