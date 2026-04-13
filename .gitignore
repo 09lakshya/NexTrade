@@ -7,3 +7,4 @@ dist
 build
 .log
 *.db
+frontend/.env.local
