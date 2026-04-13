@@ -1,6 +1,19 @@
 import yfinance as yf
 import numpy as np
 from concurrent.futures import ThreadPoolExecutor, as_completed
+import redis, json, hashlib, os
+
+try:
+    cache = redis.Redis(
+        host=os.getenv('REDIS_HOST', 'localhost'),
+        port=int(os.getenv('REDIS_PORT', 6379)),
+        decode_responses=True
+    )
+    cache.ping()
+    CACHE_AVAILABLE = True
+except:
+    CACHE_AVAILABLE = False
+    cache = None
 
 # ── RSI helper (self-contained so this service has no circular imports) ──────
 def _rsi(prices, period=14):
@@ -186,6 +199,13 @@ def _reason(meta: dict, signals: dict, goal: str, duration: str, sentiment_score
 
 # ── Main entry point ──────────────────────────────────────────────────────────
 def get_recommendations(goal: str, duration: str, risk: str, budget: float):
+    # Graceful fallback: if Redis is unavailable, function runs normally without caching
+    if CACHE_AVAILABLE:
+        key = f"advisor:{goal}:{duration}:{risk}:{int(budget//10000)}"
+        cached_value = cache.get(key)
+        if cached_value:
+            return json.loads(cached_value)
+
     candidates = GOAL_CANDIDATES.get(goal, GOAL_CANDIDATES["wealth"])
 
     # Parallel fetch
@@ -268,4 +288,7 @@ def get_recommendations(goal: str, duration: str, risk: str, budget: float):
             "shares_you_can_buy":   shares,
         })
 
+    if CACHE_AVAILABLE:
+        cache.setex(key, 900, json.dumps(results))
+        
     return results

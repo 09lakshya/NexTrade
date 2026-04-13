@@ -16,6 +16,10 @@ class HoldingInput(BaseModel):
 
 @router.get("/{user_id}")
 def fetch_portfolio(user_id: str):
+    if not user_id or len(user_id) < 5:
+        from fastapi import HTTPException
+        raise HTTPException(status_code=400, detail="Invalid user ID")
+        
     holdings = get_portfolio(user_id)
     enriched = []
     for h in holdings:

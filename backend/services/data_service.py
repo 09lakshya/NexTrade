@@ -25,31 +25,31 @@ def get_history(symbol: str, period: str = "1mo"):
     try:
         stock = yf.Ticker(symbol)
 
-        # For 1-day period, show the last trading day with last day data
         if period == "1d":
-            # Get 5 days to ensure we have last trading day
-            df = stock.history(period="5d", interval="1d")
-            
-            if not df.empty:
-                # Get only the latest trading day
-                df = df.tail(1)
-                print(f"✓ Got 1d data for {symbol} (latest trading day)")
-            else:
-                print(f"❌ No data for {symbol} in last 5 days")
+            # Intraday 5-minute data for the whole day
+            df = stock.history(period="1d", interval="5m")
+            if df.empty:
+                return []
+        elif period == "5d":
+            # Intraday 15-minute data for 5 days
+            df = stock.history(period="5d", interval="15m")
+            if df.empty:
                 return []
         else:
-            # For other periods, use daily interval
+            # Daily data for 1mo and beyond
             df = stock.history(period=period, interval="1d")
-            
             if df.empty:
-                print(f"❌ No data for {symbol} with period {period}")
                 return []
 
         df = df.reset_index()
-        df = df[["Date", "Close"]]
+        # yfinance returns 'Datetime' for intraday and 'Date' for daily
+        date_col = "Datetime" if "Datetime" in df.columns else "Date"
+        
+        df = df[[date_col, "Close"]]
+        df = df.rename(columns={date_col: "Date"})
+        
         df["Date"] = df["Date"].astype(str)
 
-        print(f"✓ Returning {len(df)} records for {symbol}: {df.to_dict(orient='records')}")
         return df.to_dict(orient="records")
 
     except Exception as e:

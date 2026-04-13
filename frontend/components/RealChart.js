@@ -40,19 +40,34 @@ export default function RealChart({ data }) {
     ? "rgba(0, 255, 136, 0.15)"
     : "rgba(255, 51, 102, 0.15)";
 
-  const formatDateOnly = (dateString) => {
+  let isIntraday = false;
+  if (cleaned.length > 2) {
+    const t1 = new Date(cleaned[0].Date).getTime();
+    const t2 = new Date(cleaned[cleaned.length - 1].Date).getTime();
+    if (t2 - t1 <= 7 * 24 * 60 * 60 * 1000) {
+      isIntraday = true;
+    }
+  }
+
+  const formatLabel = (dateString) => {
     try {
       const date = new Date(dateString);
       const day = String(date.getDate()).padStart(2, "0");
       const month = String(date.getMonth() + 1).padStart(2, "0");
-      const year = date.getFullYear();
-      return `${day}/${month}/${year}`;
+      
+      if (isIntraday) {
+        const time = date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+        return `${day}/${month}  ${time}`;
+      } else {
+        const year = date.getFullYear();
+        return `${day}/${month}/${year}`;
+      }
     } catch {
       return dateString;
     }
   };
 
-  const labels = cleaned.map((d) => formatDateOnly(d.Date));
+  const labels = cleaned.map((d) => formatLabel(d.Date));
   const prices = cleaned.map((d) => Number(d.Close));
 
   const chartOptions = {
