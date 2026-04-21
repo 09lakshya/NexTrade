@@ -3,8 +3,42 @@ import StockCard from "../components/StockCard";
 import Navbar from "../components/Navbar";
 import Head from "next/head";
 
+// ── Market hours helper (NSE: Mon–Fri 9:15–15:30 IST) ────────────────────
+function isMarketOpen() {
+  const now = new Date();
+  // Convert to IST (UTC+5:30)
+  const utc = now.getTime() + now.getTimezoneOffset() * 60000;
+  const ist = new Date(utc + 5.5 * 3600000);
+  const day = ist.getDay(); // 0=Sun, 6=Sat
+  if (day === 0 || day === 6) return false;
+  const mins = ist.getHours() * 60 + ist.getMinutes();
+  return mins >= 555 && mins < 930; // 9:15=555, 15:30=930
+}
+
 // ── Market status indicator ───────────────────────────────────────────────
 function MarketStatusBadge({ connected }) {
+  const [open, setOpen] = useState(false);
+
+  useEffect(() => {
+    setOpen(isMarketOpen());
+    const id = setInterval(() => setOpen(isMarketOpen()), 30000); // check every 30s
+    return () => clearInterval(id);
+  }, []);
+
+  const live = connected && open;
+  const label = !connected ? "Connecting…" : open ? "Live" : "Market Closed";
+  const color = !connected ? "#ffc107" : open ? "#00e676" : "rgba(255,255,255,0.4)";
+  const bg = !connected
+    ? "rgba(255,193,7,0.1)"
+    : open
+    ? "rgba(0,230,118,0.1)"
+    : "rgba(255,255,255,0.05)";
+  const borderColor = !connected
+    ? "rgba(255,193,7,0.25)"
+    : open
+    ? "rgba(0,230,118,0.25)"
+    : "rgba(255,255,255,0.1)";
+
   return (
     <div
       style={{
@@ -13,11 +47,11 @@ function MarketStatusBadge({ connected }) {
         gap: "6px",
         padding: "5px 12px",
         borderRadius: "20px",
-        background: connected ? "rgba(0,230,118,0.1)" : "rgba(255,193,7,0.1)",
-        border: `1px solid ${connected ? "rgba(0,230,118,0.25)" : "rgba(255,193,7,0.25)"}`,
+        background: bg,
+        border: `1px solid ${borderColor}`,
         fontSize: "0.72rem",
         fontWeight: 700,
-        color: connected ? "#00e676" : "#ffc107",
+        color: color,
         letterSpacing: "0.05em",
         textTransform: "uppercase",
       }}
@@ -27,12 +61,12 @@ function MarketStatusBadge({ connected }) {
           width: "6px",
           height: "6px",
           borderRadius: "50%",
-          background: connected ? "#00e676" : "#ffc107",
-          animation: connected ? "pulseGlow 2s ease-in-out infinite" : "none",
-          boxShadow: connected ? "0 0 8px #00e676" : "none",
+          background: color,
+          animation: live ? "pulseGlow 2s ease-in-out infinite" : "none",
+          boxShadow: live ? "0 0 8px #00e676" : "none",
         }}
       />
-      {connected ? "Live" : "Connecting…"}
+      {label}
     </div>
   );
 }

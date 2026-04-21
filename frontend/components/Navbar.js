@@ -2,6 +2,7 @@ import Link from "next/link";
 import { useRouter } from "next/router";
 import { useState, useEffect, useRef } from "react";
 import API from "../services/api";
+import { useAuth } from "../context/AuthContext";
 
 const NAV_LINKS = [
   { href: "/",           label: "Dashboard", icon: "⬡" },
@@ -12,11 +13,14 @@ const NAV_LINKS = [
 
 export default function Navbar() {
   const router = useRouter();
+  const { user, logout } = useAuth();
   const [query, setQuery] = useState("");
   const [results, setResults] = useState([]);
   const [mobileOpen, setMobileOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
+  const [userMenuOpen, setUserMenuOpen] = useState(false);
   const searchRef = useRef(null);
+  const userMenuRef = useRef(null);
 
   useEffect(() => {
     const onScroll = () => setScrolled(window.scrollY > 10);
@@ -24,11 +28,14 @@ export default function Navbar() {
     return () => window.removeEventListener("scroll", onScroll);
   }, []);
 
-  // Close search dropdown on outside click
+  // Close dropdowns on outside click
   useEffect(() => {
     const handler = (e) => {
       if (searchRef.current && !searchRef.current.contains(e.target)) {
         setResults([]);
+      }
+      if (userMenuRef.current && !userMenuRef.current.contains(e.target)) {
+        setUserMenuOpen(false);
       }
     };
     document.addEventListener("mousedown", handler);
@@ -82,24 +89,21 @@ export default function Navbar() {
           {/* Logo */}
           <Link href="/" style={{ textDecoration: "none", flex: "0 0 auto" }}>
             <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
-              <div
+              <img
+                src="/logo-512.png"
+                alt="NexTrade"
+                width={36}
+                height={36}
                 style={{
-                  width: "34px",
-                  height: "34px",
-                  borderRadius: "10px",
-                  background: "linear-gradient(135deg, #00e5ff 0%, #0091ea 100%)",
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "center",
-                  fontWeight: 900,
-                  fontSize: "16px",
-                  color: "#080c1a",
-                  boxShadow: "0 4px 16px rgba(0,229,255,0.4)",
+                  width: "36px",
+                  height: "36px",
                   flexShrink: 0,
+                  filter: "drop-shadow(0 2px 8px rgba(0,229,255,0.3))",
+                  objectFit: "contain",
+                  borderRadius: "6px",
+                  aspectRatio: "1 / 1",
                 }}
-              >
-                N
-              </div>
+              />
               <span
                 style={{
                   fontFamily: "'Space Grotesk', sans-serif",
@@ -271,6 +275,137 @@ export default function Navbar() {
               </div>
             )}
           </div>
+
+          {/* User Menu / Login */}
+          {user ? (
+            <div ref={userMenuRef} style={{ position: "relative", flexShrink: 0 }}>
+              <button
+                onClick={() => setUserMenuOpen(!userMenuOpen)}
+                style={{
+                  display: "flex",
+                  alignItems: "center",
+                  gap: "10px",
+                  background: "rgba(255,255,255,0.05)",
+                  border: "1px solid rgba(255,255,255,0.1)",
+                  borderRadius: "12px",
+                  padding: "6px 14px 6px 6px",
+                  cursor: "pointer",
+                  transition: "all 0.2s",
+                }}
+                onMouseEnter={e => { e.currentTarget.style.borderColor = "rgba(0,229,255,0.3)"; }}
+                onMouseLeave={e => { e.currentTarget.style.borderColor = "rgba(255,255,255,0.1)"; }}
+              >
+                {/* Avatar */}
+                <div
+                  style={{
+                    width: "32px",
+                    height: "32px",
+                    borderRadius: "10px",
+                    background: "linear-gradient(135deg, #00e5ff 0%, #0091ea 100%)",
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    fontSize: "0.8rem",
+                    fontWeight: 800,
+                    color: "#080c1a",
+                    fontFamily: "'Space Grotesk', sans-serif",
+                    flexShrink: 0,
+                  }}
+                >
+                  {user.name ? user.name.charAt(0).toUpperCase() : "U"}
+                </div>
+                <span
+                  style={{
+                    fontSize: "0.85rem",
+                    fontWeight: 600,
+                    color: "rgba(255,255,255,0.8)",
+                    maxWidth: "100px",
+                    overflow: "hidden",
+                    textOverflow: "ellipsis",
+                    whiteSpace: "nowrap",
+                  }}
+                  className="hidden sm:inline"
+                >
+                  {user.name || "User"}
+                </span>
+                <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.4)" strokeWidth="2.5" style={{ flexShrink: 0 }}>
+                  <polyline points="6 9 12 15 18 9" />
+                </svg>
+              </button>
+
+              {/* Dropdown */}
+              {userMenuOpen && (
+                <div
+                  style={{
+                    position: "absolute",
+                    top: "calc(100% + 8px)",
+                    right: 0,
+                    width: "240px",
+                    background: "rgba(8,12,26,0.98)",
+                    border: "1px solid rgba(255,255,255,0.1)",
+                    borderRadius: "16px",
+                    overflow: "hidden",
+                    boxShadow: "0 20px 60px rgba(0,0,0,0.6)",
+                    zIndex: 200,
+                    animation: "fadeInUp 0.2s ease forwards",
+                  }}
+                >
+                  {/* User info */}
+                  <div style={{ padding: "16px 18px", borderBottom: "1px solid rgba(255,255,255,0.06)" }}>
+                    <p style={{ fontWeight: 700, color: "#f1f5f9", fontSize: "0.95rem", marginBottom: "3px" }}>
+                      {user.name}
+                    </p>
+                    <p style={{ fontSize: "0.75rem", color: "rgba(255,255,255,0.35)" }}>
+                      {user.email}
+                    </p>
+                  </div>
+                  {/* Logout */}
+                  <button
+                    onClick={() => { setUserMenuOpen(false); logout(); router.replace("/login"); }}
+                    style={{
+                      width: "100%",
+                      padding: "14px 18px",
+                      background: "transparent",
+                      border: "none",
+                      cursor: "pointer",
+                      textAlign: "left",
+                      fontSize: "0.875rem",
+                      fontWeight: 600,
+                      color: "#ff5252",
+                      fontFamily: "inherit",
+                      display: "flex",
+                      alignItems: "center",
+                      gap: "10px",
+                      transition: "background 0.15s",
+                    }}
+                    onMouseEnter={e => e.currentTarget.style.background = "rgba(255,23,68,0.06)"}
+                    onMouseLeave={e => e.currentTarget.style.background = "transparent"}
+                  >
+                    <span style={{ fontSize: "1rem" }}>⏻</span>
+                    Sign Out
+                  </button>
+                </div>
+              )}
+            </div>
+          ) : (
+            <Link
+              href="/login"
+              style={{
+                padding: "8px 20px",
+                borderRadius: "10px",
+                background: "linear-gradient(135deg, #00e5ff 0%, #0091ea 100%)",
+                color: "#080c1a",
+                fontWeight: 700,
+                fontSize: "0.85rem",
+                textDecoration: "none",
+                boxShadow: "0 4px 16px rgba(0,229,255,0.25)",
+                transition: "all 0.2s",
+                flexShrink: 0,
+              }}
+            >
+              Sign In
+            </Link>
+          )}
 
           {/* Mobile menu button */}
           <button

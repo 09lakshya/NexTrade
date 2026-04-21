@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import Navbar from "../components/Navbar";
 import API from "../services/api";
 import Head from "next/head";
+import { useAuth } from "../context/AuthContext";
 
 // ── Mini donut for allocation ─────────────────────────────────────────────
 function AllocationDonut({ holdings, size = 100 }) {
@@ -158,7 +159,8 @@ function HoldingRow({ h, onRemove }) {
 
 // ── Main Portfolio Page ───────────────────────────────────────────────────
 export default function Portfolio() {
-  const [userId, setUserId]       = useState(null);
+  const { user } = useAuth();
+  const userId = user ? String(user.id) : null;
   const [holdings, setHoldings]   = useState([]);
   const [loading, setLoading]     = useState(true);
   const [showForm, setShowForm]   = useState(false);
@@ -170,15 +172,6 @@ export default function Portfolio() {
   const [buyPrice, setBuyPrice]       = useState("");
   const [adding, setAdding]           = useState(false);
   const [formErr, setFormErr]         = useState("");
-
-  useEffect(() => {
-    let id = localStorage.getItem("ntrade_uid");
-    if (!id) {
-      id = "u_" + Date.now() + "_" + Math.random().toString(36).substr(2, 6);
-      localStorage.setItem("ntrade_uid", id);
-    }
-    setUserId(id);
-  }, []);
 
   useEffect(() => {
     if (!userId) return;
@@ -305,14 +298,7 @@ export default function Portfolio() {
               </p>
             </div>
 
-            <div className="mb-6 p-3 glass border border-yellow-500 border-opacity-20 rounded-xl flex items-center gap-3">
-              <span className="text-yellow-400 text-sm">⚠️</span>
-              <p className="text-xs text-gray-400">
-                Your portfolio is saved locally to this browser. 
-                Clearing browser data will remove your holdings. 
-                <span className="text-accent">Export feature coming soon.</span>
-              </p>
-            </div>
+
 
             <button
               onClick={() => { setShowForm(!showForm); setFormErr(""); }}
