@@ -27,17 +27,17 @@ function MarketStatusBadge({ connected }) {
 
   const live = connected && open;
   const label = !connected ? "Connecting…" : open ? "Live" : "Market Closed";
-  const color = !connected ? "#ffc107" : open ? "#00e676" : "rgba(255,255,255,0.4)";
+  const color = !connected ? "var(--gold)" : open ? "var(--green)" : "var(--text-muted)";
   const bg = !connected
     ? "rgba(255,193,7,0.1)"
     : open
-    ? "rgba(0,230,118,0.1)"
-    : "rgba(255,255,255,0.05)";
+    ? "var(--green-dim)"
+    : "var(--bg-card)";
   const borderColor = !connected
     ? "rgba(255,193,7,0.25)"
     : open
     ? "rgba(0,230,118,0.25)"
-    : "rgba(255,255,255,0.1)";
+    : "var(--border-subtle)";
 
   return (
     <div
@@ -62,8 +62,8 @@ function MarketStatusBadge({ connected }) {
           height: "6px",
           borderRadius: "50%",
           background: color,
-          animation: live ? "pulseGlow 2s ease-in-out infinite" : "none",
-          boxShadow: live ? "0 0 8px #00e676" : "none",
+          animation: live ? "pulseGlowGreen 2s ease-in-out infinite" : "none",
+          boxShadow: live ? "0 0 8px var(--green)" : "none",
         }}
       />
       {label}
@@ -75,16 +75,16 @@ function MarketStatusBadge({ connected }) {
 function TickerTape({ stocks }) {
   const items = Object.entries(stocks).slice(0, 20);
   if (items.length === 0) return null;
-  const doubled = [...items, ...items]; // loop
+  const doubled = [...items, ...items];
 
   return (
     <div
+      className="ticker-wrap"
       style={{
-        borderBottom: "1px solid rgba(255,255,255,0.05)",
-        borderTop: "1px solid rgba(255,255,255,0.05)",
-        background: "rgba(0,0,0,0.2)",
-        overflow: "hidden",
-        whiteSpace: "nowrap",
+        borderBottom: "1px solid var(--border-subtle)",
+        borderTop: "1px solid var(--border-subtle)",
+        background: "var(--breadth-bg)",
+        backdropFilter: "blur(12px)",
         height: "36px",
         display: "flex",
         alignItems: "center",
@@ -105,16 +105,16 @@ function TickerTape({ stocks }) {
               style={{
                 fontSize: "0.72rem",
                 fontWeight: 600,
-                color: "rgba(255,255,255,0.7)",
+                color: "var(--text-secondary)",
                 display: "inline-flex",
                 alignItems: "center",
                 gap: "6px",
                 flexShrink: 0,
               }}
             >
-              <span style={{ color: "#00e5ff" }}>{sym}</span>
+              <span style={{ color: "var(--accent)", fontWeight: 700 }}>{sym}</span>
               <span>₹{(d?.price || 0).toFixed(2)}</span>
-              <span style={{ color: pos ? "#00e676" : "#ff1744", fontWeight: 700 }}>
+              <span style={{ color: pos ? "var(--green)" : "var(--red)", fontWeight: 700 }}>
                 {pos ? "▲" : "▼"} {Math.abs(d?.percent || 0).toFixed(2)}%
               </span>
             </span>
@@ -136,18 +136,41 @@ function IndexCard({ symbol, data, prevData }) {
   return (
     <div
       style={{
-        background: "rgba(13,18,36,0.7)",
-        border: "1px solid rgba(255,255,255,0.07)",
+        background: "var(--bg-card)",
+        backdropFilter: "blur(24px) saturate(200%)",
+        WebkitBackdropFilter: "blur(24px) saturate(200%)",
+        border: `1px solid ${flash === "up" ? "rgba(0,230,118,0.3)" : flash === "down" ? "rgba(255,23,68,0.3)" : "var(--border-subtle)"}`,
         borderRadius: "clamp(14px, 2vw, 20px)",
         padding: "clamp(16px, 3vw, 24px) clamp(18px, 3vw, 28px)",
-        backdropFilter: "blur(20px)",
-        WebkitBackdropFilter: "blur(20px)",
         flex: "1 1 200px",
         minWidth: "min(220px, 100%)",
         position: "relative",
         overflow: "hidden",
+        boxShadow: flash === "up"
+          ? "0 0 24px rgba(0,230,118,0.15), var(--shadow-card)"
+          : flash === "down"
+          ? "0 0 24px rgba(255,23,68,0.15), var(--shadow-card)"
+          : "var(--shadow-card)",
+        animation: flash === "up"
+          ? "flashPriceUp 0.8s ease forwards"
+          : flash === "down"
+          ? "flashPriceDown 0.8s ease forwards"
+          : "none",
+        transition: "border-color 0.3s ease, box-shadow 0.3s ease",
       }}
     >
+      {/* Glass shimmer */}
+      <div
+        style={{
+          position: "absolute",
+          top: 0,
+          left: 0,
+          right: 0,
+          bottom: 0,
+          background: "linear-gradient(135deg, rgba(255,255,255,0.04) 0%, transparent 60%)",
+          pointerEvents: "none",
+        }}
+      />
       {/* Decorative accent line */}
       <div
         style={{
@@ -157,14 +180,14 @@ function IndexCard({ symbol, data, prevData }) {
           right: 0,
           height: "2px",
           background: isUp
-            ? "linear-gradient(90deg, #00e676, transparent)"
-            : "linear-gradient(90deg, #ff1744, transparent)",
+            ? "linear-gradient(90deg, var(--green), transparent)"
+            : "linear-gradient(90deg, var(--red), transparent)",
           borderRadius: "20px 20px 0 0",
         }}
       />
 
       <div style={{ marginBottom: "8px" }}>
-        <span style={{ fontSize: "0.7rem", fontWeight: 700, color: "rgba(255,255,255,0.4)", letterSpacing: "0.1em", textTransform: "uppercase" }}>
+        <span style={{ fontSize: "0.7rem", fontWeight: 700, color: "var(--text-muted)", letterSpacing: "0.1em", textTransform: "uppercase" }}>
           {symbol === "NIFTY50" ? "NIFTY 50" : symbol === "SENSEX" ? "BSE SENSEX" : symbol}
         </span>
       </div>
@@ -173,7 +196,7 @@ function IndexCard({ symbol, data, prevData }) {
         style={{
           fontSize: "clamp(1.4rem, 3vw, 2rem)",
           fontWeight: 800,
-          color: flash === "up" ? "#00e676" : flash === "down" ? "#ff1744" : "#f1f5f9",
+          color: flash === "up" ? "var(--green)" : flash === "down" ? "var(--red)" : "var(--text-primary)",
           transition: "color 0.4s",
           fontFamily: "'Space Grotesk', sans-serif",
           letterSpacing: "-0.03em",
@@ -188,7 +211,7 @@ function IndexCard({ symbol, data, prevData }) {
           style={{
             fontSize: "0.85rem",
             fontWeight: 700,
-            color: isUp ? "#00e676" : "#ff1744",
+            color: isUp ? "var(--green)" : "var(--red)",
           }}
         >
           {isUp ? "▲ +" : "▼ "}{(data.change || 0).toFixed(2)}
@@ -197,8 +220,8 @@ function IndexCard({ symbol, data, prevData }) {
           style={{
             padding: "2px 8px",
             borderRadius: "20px",
-            background: isUp ? "rgba(0,230,118,0.12)" : "rgba(255,23,68,0.12)",
-            color: isUp ? "#00e676" : "#ff1744",
+            background: isUp ? "var(--green-dim)" : "var(--red-dim)",
+            color: isUp ? "var(--green)" : "var(--red)",
             fontSize: "0.75rem",
             fontWeight: 700,
           }}
@@ -215,8 +238,8 @@ function SkeletonCard() {
   return (
     <div
       style={{
-        background: "rgba(13,18,36,0.7)",
-        border: "1px solid rgba(255,255,255,0.06)",
+        background: "var(--bg-card)",
+        border: "1px solid var(--border-subtle)",
         borderRadius: "16px",
         padding: "20px",
         height: "130px",
@@ -317,7 +340,7 @@ export default function Home() {
             }}
           >
             <div>
-              <p style={{ fontSize: "0.72rem", fontWeight: 700, color: "rgba(255,255,255,0.4)", letterSpacing: "0.1em", textTransform: "uppercase", marginBottom: "8px" }}>
+              <p style={{ fontSize: "0.72rem", fontWeight: 700, color: "var(--text-muted)", letterSpacing: "0.1em", textTransform: "uppercase", marginBottom: "8px" }}>
                 Indian Stock Market
               </p>
               <h1
@@ -336,8 +359,8 @@ export default function Home() {
               >
                 Live Market
               </h1>
-              <p style={{ color: "rgba(255,255,255,0.45)", fontSize: "0.9rem", fontWeight: 400 }}>
-                Real-time prices · Updated every second
+              <p style={{ color: "var(--text-muted)", fontSize: "0.9rem", fontWeight: 400 }}>
+                Real-time prices · Updated every ~15 seconds
               </p>
             </div>
 
@@ -345,18 +368,18 @@ export default function Home() {
               {isLoaded && (
                 <div style={{ display: "flex", gap: "12px" }}>
                   <div style={{ textAlign: "center" }}>
-                    <p style={{ fontSize: "1.2rem", fontWeight: 800, color: "#00e676", fontFamily: "'Space Grotesk', sans-serif" }}>{gainersCount}</p>
-                    <p style={{ fontSize: "0.65rem", color: "rgba(255,255,255,0.4)", fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.05em" }}>Gainers</p>
+                    <p style={{ fontSize: "1.2rem", fontWeight: 800, color: "var(--green)", fontFamily: "'Space Grotesk', sans-serif" }}>{gainersCount}</p>
+                    <p style={{ fontSize: "0.65rem", color: "var(--text-muted)", fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.05em" }}>Gainers</p>
                   </div>
-                  <div style={{ width: "1px", background: "rgba(255,255,255,0.08)" }} />
+                  <div style={{ width: "1px", background: "var(--border-subtle)" }} />
                   <div style={{ textAlign: "center" }}>
-                    <p style={{ fontSize: "1.2rem", fontWeight: 800, color: "#ff1744", fontFamily: "'Space Grotesk', sans-serif" }}>{losersCount}</p>
-                    <p style={{ fontSize: "0.65rem", color: "rgba(255,255,255,0.4)", fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.05em" }}>Losers</p>
+                    <p style={{ fontSize: "1.2rem", fontWeight: 800, color: "var(--red)", fontFamily: "'Space Grotesk', sans-serif" }}>{losersCount}</p>
+                    <p style={{ fontSize: "0.65rem", color: "var(--text-muted)", fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.05em" }}>Losers</p>
                   </div>
-                  <div style={{ width: "1px", background: "rgba(255,255,255,0.08)" }} />
+                  <div style={{ width: "1px", background: "var(--border-subtle)" }} />
                   <div style={{ textAlign: "center" }}>
-                    <p style={{ fontSize: "1.2rem", fontWeight: 800, color: "#00e5ff", fontFamily: "'Space Grotesk', sans-serif" }}>{totalStocks}</p>
-                    <p style={{ fontSize: "0.65rem", color: "rgba(255,255,255,0.4)", fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.05em" }}>Stocks</p>
+                    <p style={{ fontSize: "1.2rem", fontWeight: 800, color: "var(--accent)", fontFamily: "'Space Grotesk', sans-serif" }}>{totalStocks}</p>
+                    <p style={{ fontSize: "0.65rem", color: "var(--text-muted)", fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.05em" }}>Stocks</p>
                   </div>
                 </div>
               )}
@@ -376,24 +399,28 @@ export default function Home() {
             </div>
           )}
 
-          {/* ── Market breadth bar ───────────────────────────────────── */}
+          {/* ── Market breadth bar ─────────────────────────────────── */}
           {isLoaded && (
             <div
               style={{
-                background: "rgba(13,18,36,0.7)",
-                border: "1px solid rgba(255,255,255,0.07)",
+                background: "var(--bg-card)",
+                backdropFilter: "blur(16px)",
+                WebkitBackdropFilter: "blur(16px)",
+                border: "1px solid var(--border-subtle)",
                 borderRadius: "16px",
                 padding: "16px 20px",
                 marginBottom: "32px",
-                backdropFilter: "blur(12px)",
+                boxShadow: gainersCount > losersCount
+                  ? "0 0 32px rgba(0,230,118,0.06), var(--shadow-card)"
+                  : "var(--shadow-card)",
                 animation: "fadeInUp 0.5s 0.15s ease both",
               }}
             >
               <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "10px" }}>
-                <span style={{ fontSize: "0.75rem", fontWeight: 600, color: "rgba(255,255,255,0.5)", letterSpacing: "0.05em", textTransform: "uppercase" }}>
+                <span style={{ fontSize: "0.75rem", fontWeight: 600, color: "var(--text-muted)", letterSpacing: "0.05em", textTransform: "uppercase" }}>
                   Market Breadth
                 </span>
-                <span style={{ fontSize: "0.75rem", color: "rgba(255,255,255,0.4)" }}>
+                <span style={{ fontSize: "0.75rem", color: "var(--text-muted)" }}>
                   {gainersCount} gainers · {losersCount} losers
                 </span>
               </div>
@@ -404,6 +431,7 @@ export default function Home() {
                     background: "linear-gradient(90deg, #00e676, #69f0ae)",
                     borderRadius: "8px 0 0 8px",
                     transition: "flex 0.5s ease",
+                    boxShadow: gainersCount > losersCount ? "0 0 12px rgba(0,230,118,0.4)" : "none",
                   }}
                 />
                 <div
@@ -412,13 +440,14 @@ export default function Home() {
                     background: "linear-gradient(90deg, #ff5252, #ff1744)",
                     borderRadius: "0 8px 8px 0",
                     transition: "flex 0.5s ease",
+                    boxShadow: losersCount > gainersCount ? "0 0 12px rgba(255,23,68,0.4)" : "none",
                   }}
                 />
               </div>
             </div>
           )}
 
-          {/* ── Filter tabs ──────────────────────────────────────────── */}
+          {/* ── Filter tabs ──────────────────────────────────────── */}
           <div
             style={{
               display: "flex",
@@ -437,11 +466,11 @@ export default function Home() {
               <button
                 onClick={() => setViewAll(!viewAll)}
                 style={{
-                  padding: "6px 12px",
+                  padding: "6px 14px",
                   borderRadius: "9px",
-                  border: "1px solid rgba(255,255,255,0.1)",
-                  background: viewAll ? "rgba(255,255,255,0.1)" : "transparent",
-                  color: viewAll ? "#fff" : "rgba(255,255,255,0.6)",
+                  border: "1px solid var(--border-medium)",
+                  background: viewAll ? "var(--accent-dim)" : "transparent",
+                  color: viewAll ? "var(--accent)" : "var(--text-muted)",
                   cursor: "pointer",
                   fontSize: "0.75rem",
                   fontWeight: 600,
@@ -450,7 +479,7 @@ export default function Home() {
               >
                 {viewAll ? "Show Top 10" : "View All"}
               </button>
-              <div style={{ display: "flex", gap: "6px", background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.07)", borderRadius: "12px", padding: "4px" }}>
+              <div style={{ display: "flex", gap: "4px", background: "var(--filter-tab-bg)", border: "1px solid var(--filter-tab-border)", borderRadius: "12px", padding: "4px" }}>
                 {["All", "Gainers", "Losers"].map((cat) => (
                 <button
                   key={cat}
@@ -466,15 +495,15 @@ export default function Home() {
                     transition: "all 0.2s",
                     background: filterCategory === cat
                       ? cat === "Gainers"
-                        ? "rgba(0,230,118,0.15)"
+                        ? "linear-gradient(135deg, rgba(0,230,118,0.2), rgba(0,230,118,0.08))"
                         : cat === "Losers"
-                        ? "rgba(255,23,68,0.15)"
-                        : "rgba(0,229,255,0.15)"
+                        ? "linear-gradient(135deg, rgba(255,23,68,0.2), rgba(255,23,68,0.08))"
+                        : "linear-gradient(135deg, var(--accent-dim), rgba(0,145,234,0.05))"
                       : "transparent",
                     color: filterCategory === cat
-                      ? cat === "Gainers" ? "#00e676" : cat === "Losers" ? "#ff1744" : "#00e5ff"
-                      : "rgba(255,255,255,0.45)",
-                    boxShadow: filterCategory === cat ? "0 2px 8px rgba(0,0,0,0.2)" : "none",
+                      ? cat === "Gainers" ? "var(--green)" : cat === "Losers" ? "var(--red)" : "var(--accent)"
+                      : "var(--filter-tab-inactive)",
+                    boxShadow: filterCategory === cat ? "0 2px 8px rgba(0,0,0,0.15)" : "none",
                   }}
                 >
                   {cat}
@@ -498,15 +527,15 @@ export default function Home() {
           ) : displayed.length === 0 ? (
             <div
               style={{
-                background: "rgba(13,18,36,0.7)",
-                border: "1px solid rgba(255,255,255,0.07)",
+                background: "var(--bg-card)",
+                border: "1px solid var(--border-subtle)",
                 borderRadius: "20px",
                 padding: "64px 24px",
                 textAlign: "center",
               }}
             >
               <p style={{ fontSize: "3rem", marginBottom: "16px" }}>📉</p>
-              <p style={{ color: "rgba(255,255,255,0.6)", fontSize: "1rem" }}>
+              <p style={{ color: "var(--text-muted)", fontSize: "1rem" }}>
                 No {filterCategory.toLowerCase()} stocks right now.
               </p>
             </div>
@@ -530,7 +559,7 @@ export default function Home() {
                 return (
                   <div
                     key={sym}
-                    style={{ animation: `fadeInUp 0.4s ${idx * 0.03}s ease both` }}
+                    style={{ animation: `dealIn 0.5s ${idx * 0.04}s cubic-bezier(0.22, 1, 0.36, 1) both` }}
                   >
                     <StockCard
                       symbol={sym}
@@ -545,9 +574,9 @@ export default function Home() {
             </div>
           )}
 
-          {/* ── Footer note ─────────────────────────────────────────── */}
+          {/* ── Footer note ─────────────────────────────────── */}
           <div style={{ marginTop: "48px", textAlign: "center" }}>
-            <p style={{ fontSize: "0.72rem", color: "rgba(255,255,255,0.2)", fontWeight: 500 }}>
+            <p style={{ fontSize: "0.72rem", color: "var(--text-muted)", fontWeight: 500 }}>
               Data is for informational purposes only. Not financial advice. Prices may be delayed.
             </p>
           </div>

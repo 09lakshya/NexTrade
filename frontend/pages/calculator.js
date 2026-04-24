@@ -93,7 +93,11 @@ export default function Calculator() {
       totalInvested = P;
     } else {
       const r_monthly = r_annual / 12;
-      futureValue = P * (((Math.pow(1 + r_monthly, n_months) - 1) / r_monthly) * (1 + r_monthly));
+      if (r_monthly === 0) {
+        futureValue = P * n_months;
+      } else {
+        futureValue = P * (((Math.pow(1 + r_monthly, n_months) - 1) / r_monthly) * (1 + r_monthly));
+      }
       totalInvested = P * n_months;
     }
 

@@ -3,6 +3,7 @@ import { useRouter } from 'next/router';
 import { useEffect } from 'react';
 import '../styles/globals.css';
 import { AuthProvider, useAuth } from '../context/AuthContext';
+import { ThemeProvider } from '../context/ThemeContext';
 
 // Pages that don't require authentication
 const PUBLIC_PAGES = ['/login'];
@@ -55,11 +56,13 @@ export default function App({ Component, pageProps }) {
       <Head>
         <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=5, viewport-fit=cover" />
       </Head>
-      <AuthProvider>
-        <AuthGuard>
-          <Component {...pageProps} />
-        </AuthGuard>
-      </AuthProvider>
+      <ThemeProvider>
+        <AuthProvider>
+          <AuthGuard>
+            <Component {...pageProps} />
+          </AuthGuard>
+        </AuthProvider>
+      </ThemeProvider>
     </>
   );
 }

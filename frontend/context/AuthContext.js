@@ -12,7 +12,22 @@ export function AuthProvider({ children }) {
   const [token, setToken] = useState(null);
   const [loading, setLoading] = useState(true);
 
-  // On mount — restore session from localStorage or sessionStorage
+  const refreshUser = async () => {
+    const stored =
+      localStorage.getItem("ntrade_token") ||
+      sessionStorage.getItem("ntrade_token");
+
+    if (!stored) return null;
+
+    const res = await API.get("/auth/me", {
+      headers: { Authorization: `Bearer ${stored}` },
+    });
+    setUser(res.data);
+    setToken(stored);
+    return res.data;
+  };
+
+  // On mount, restore session from localStorage or sessionStorage
   useEffect(() => {
     const stored =
       localStorage.getItem("ntrade_token") ||
@@ -32,7 +47,7 @@ export function AuthProvider({ children }) {
         setToken(stored);
       })
       .catch(() => {
-        // Token invalid / expired — clear it
+        // Token invalid or expired; clear it
         localStorage.removeItem("ntrade_token");
         sessionStorage.removeItem("ntrade_token");
       })
@@ -75,7 +90,9 @@ export function AuthProvider({ children }) {
   };
 
   return (
-    <AuthContext.Provider value={{ user, token, loading, login, signup, logout }}>
+    <AuthContext.Provider
+      value={{ user, token, loading, login, signup, logout, refreshUser, setUser }}
+    >
       {children}
     </AuthContext.Provider>
   );

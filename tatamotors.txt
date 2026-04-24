@@ -1,0 +1,1 @@
+implement a hard fallback to a second market-data source (NSE/BSE API wrapper) just for symbols Yahoo fails on, so Tata Motors still populates.

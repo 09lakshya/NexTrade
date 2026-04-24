@@ -6,6 +6,8 @@ router = APIRouter(prefix="/news")
 def _ticker(symbol: str) -> str:
     if symbol == "NIFTY50":  return "^NSEI"
     if symbol == "SENSEX":   return "^BSESN"
+    if symbol.endswith(".NS"):
+        return symbol
     return symbol + ".NS"
 
 @router.get("/{symbol}")

@@ -47,20 +47,24 @@ function genSparkline(price, change, n = 20) {
 
 export default function StockCard({ symbol, price, change, percent, color, small }) {
   const router = useRouter();
-  const isPositive = change >= 0;
-  const [sparkData] = useState(() => genSparkline(price, change));
+  const prc = typeof price === "number" && Number.isFinite(price) ? price : 0;
+  const chg = typeof change === "number" && Number.isFinite(change) ? change : 0;
+  const pct = typeof percent === "number" && Number.isFinite(percent) ? percent : 0;
+  const hasData = prc > 0;
+  const isPositive = hasData ? chg >= 0 : false;
+  const [sparkData] = useState(() => (hasData ? genSparkline(prc, chg) : []));
   const [hovered, setHovered] = useState(false);
-  const prevPriceRef = useRef(price);
+  const prevPriceRef = useRef(prc);
   const [flash, setFlash] = useState(null); // "up" | "down" | null
 
   useEffect(() => {
-    if (prevPriceRef.current !== price) {
-      setFlash(price > prevPriceRef.current ? "up" : "down");
-      prevPriceRef.current = price;
+    if (hasData && prevPriceRef.current !== prc) {
+      setFlash(prc > prevPriceRef.current ? "up" : "down");
+      prevPriceRef.current = prc;
       const t = setTimeout(() => setFlash(null), 700);
       return () => clearTimeout(t);
     }
-  }, [price]);
+  }, [prc, hasData]);
 
   const flashBg =
     flash === "up"
@@ -69,10 +73,6 @@ export default function StockCard({ symbol, price, change, percent, color, small
       ? "rgba(255, 23, 68, 0.08)"
       : "transparent";
 
-  const pct = typeof percent === "number" ? percent : 0;
-  const chg = typeof change === "number" ? change : 0;
-  const prc = typeof price === "number" ? price : 0;
-
   return (
     <div
       onClick={() => router.push(`/stock/${symbol}`)}
@@ -80,19 +80,19 @@ export default function StockCard({ symbol, price, change, percent, color, small
       onMouseLeave={() => setHovered(false)}
       style={{
         background: flash === "up"
-          ? "rgba(0, 100, 60, 0.6)"
+          ? "var(--green-dim)"
           : flash === "down"
-          ? "rgba(120, 20, 35, 0.6)"
+          ? "var(--red-dim)"
           : hovered
-          ? "rgba(13,18,36,0.95)"
-          : "rgba(13,18,36,0.7)",
-        border: `1px solid ${hovered ? "rgba(0,229,255,0.25)" : "rgba(255,255,255,0.07)"}`,
+          ? "var(--bg-card)"
+          : "var(--bg-card)",
+        border: `1px solid ${hovered ? "rgba(0,229,255,0.25)" : "var(--border-subtle)"}`,
         borderRadius: "clamp(12px, 2vw, 16px)",
         padding: small ? "clamp(12px, 2vw, 16px)" : "clamp(14px, 2.5vw, 20px)",
         cursor: "pointer",
         transition: "all 0.25s ease",
         transform: hovered ? "translateY(-3px)" : "translateY(0)",
-        boxShadow: hovered ? "0 16px 48px rgba(0,0,0,0.5), 0 0 0 1px rgba(0,229,255,0.1)" : "0 4px 24px rgba(0,0,0,0.3)",
+        boxShadow: hovered ? "var(--shadow-card), 0 0 0 1px rgba(0,229,255,0.1)" : "var(--shadow-card)",
         backdropFilter: "blur(16px)",
         WebkitBackdropFilter: "blur(16px)",
         position: "relative",
@@ -105,7 +105,7 @@ export default function StockCard({ symbol, price, change, percent, color, small
           style={{
             position: "absolute",
             inset: 0,
-            background: "radial-gradient(ellipse at top left, rgba(0,229,255,0.04) 0%, transparent 60%)",
+            background: "radial-gradient(ellipse at top left, var(--accent-dim) 0%, transparent 60%)",
             pointerEvents: "none",
           }}
         />
@@ -120,80 +120,131 @@ export default function StockCard({ symbol, price, change, percent, color, small
                 fontFamily: "'Space Grotesk', sans-serif",
                 fontWeight: 700,
                 fontSize: small ? "0.9rem" : "1rem",
-                background: "linear-gradient(90deg, #00e5ff, #40c4ff)",
-                WebkitBackgroundClip: "text",
-                WebkitTextFillColor: "transparent",
-                backgroundClip: "text",
+                color: "var(--accent)",
                 marginBottom: "2px",
                 letterSpacing: "-0.01em",
               }}
             >
               {symbol}
             </p>
-            <p style={{ fontSize: "0.7rem", color: "rgba(255,255,255,0.3)", fontWeight: 500 }}>
+            <p style={{ fontSize: "0.7rem", color: "var(--text-muted)", fontWeight: 500 }}>
               NSE
             </p>
           </div>
 
-          <span
-            style={{
-              display: "inline-flex",
-              alignItems: "center",
-              gap: "3px",
-              padding: "3px 8px",
-              borderRadius: "20px",
-              fontSize: "0.65rem",
-              fontWeight: 700,
-              background: isPositive ? "rgba(0,230,118,0.12)" : "rgba(255,23,68,0.12)",
-              color: isPositive ? "#00e676" : "#ff1744",
-              border: `1px solid ${isPositive ? "rgba(0,230,118,0.2)" : "rgba(255,23,68,0.2)"}`,
-              letterSpacing: "0.03em",
-            }}
-          >
-            {isPositive ? "▲" : "▼"}
-          </span>
+          {hasData ? (
+            <span
+              style={{
+                display: "inline-flex",
+                alignItems: "center",
+                gap: "3px",
+                padding: "3px 8px",
+                borderRadius: "20px",
+                fontSize: "0.65rem",
+                fontWeight: 700,
+                background: isPositive ? "var(--green-dim)" : "var(--red-dim)",
+                color: isPositive ? "var(--green)" : "var(--red)",
+                border: `1px solid ${isPositive ? "rgba(0,230,118,0.2)" : "rgba(255,23,68,0.2)"}`,
+                letterSpacing: "0.03em",
+              }}
+            >
+              {isPositive ? "?" : "?"}
+            </span>
+          ) : (
+            <span
+              style={{
+                display: "inline-flex",
+                alignItems: "center",
+                padding: "3px 8px",
+                borderRadius: "20px",
+                fontSize: "0.62rem",
+                fontWeight: 700,
+                background: "rgba(255,23,68,0.1)",
+                color: "var(--red)",
+                border: "1px solid rgba(255,23,68,0.25)",
+                letterSpacing: "0.03em",
+                textTransform: "uppercase",
+              }}
+            >
+              Data Unavailable
+            </span>
+          )}
         </div>
 
         {/* Price */}
-        <p
-          style={{
-            fontSize: small ? "clamp(1rem, 2vw, 1.25rem)" : "clamp(1.1rem, 2.5vw, 1.5rem)",
-            fontWeight: 800,
-            color: flash === "up" ? "#00e676" : flash === "down" ? "#ff1744" : "#f1f5f9",
-            transition: "color 0.3s",
-            letterSpacing: "-0.02em",
-            marginBottom: "8px",
-            fontFamily: "'Space Grotesk', sans-serif",
-          }}
-        >
-          ₹{prc.toLocaleString("en-IN", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
-        </p>
+        {hasData ? (
+          <p
+            style={{
+              fontSize: small ? "clamp(1rem, 2vw, 1.25rem)" : "clamp(1.1rem, 2.5vw, 1.5rem)",
+              fontWeight: 800,
+              color: flash === "up" ? "var(--green)" : flash === "down" ? "var(--red)" : "var(--text-primary)",
+              transition: "color 0.3s",
+              letterSpacing: "-0.02em",
+              marginBottom: "8px",
+              fontFamily: "'Space Grotesk', sans-serif",
+            }}
+          >
+            {"\u20B9"}{prc.toLocaleString("en-IN", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+          </p>
+        ) : (
+          <p
+            style={{
+              fontSize: small ? "0.9rem" : "1rem",
+              fontWeight: 700,
+              color: "var(--text-muted)",
+              letterSpacing: "-0.01em",
+              marginBottom: "10px",
+            }}
+          >
+            Data unavailable
+          </p>
+        )}
 
         {/* Change row + Sparkline */}
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-end" }}>
           <div>
-            <p
-              style={{
-                fontSize: "0.8rem",
-                fontWeight: 600,
-                color: isPositive ? "#00e676" : "#ff1744",
-                marginBottom: "2px",
-              }}
-            >
-              {isPositive ? "+" : ""}{chg.toFixed(2)}
-            </p>
-            <p
-              style={{
-                fontSize: "0.75rem",
-                color: isPositive ? "rgba(0,230,118,0.7)" : "rgba(255,23,68,0.7)",
-                fontWeight: 500,
-              }}
-            >
-              {isPositive ? "+" : ""}{pct.toFixed(2)}%
-            </p>
+            {hasData ? (
+              <>
+                <p
+                  style={{
+                    fontSize: "0.8rem",
+                    fontWeight: 600,
+                    color: isPositive ? "var(--green)" : "var(--red)",
+                    marginBottom: "2px",
+                  }}
+                >
+                  {isPositive ? "+" : ""}{chg.toFixed(2)}
+                </p>
+                <p
+                  style={{
+                    fontSize: "0.75rem",
+                    color: isPositive ? "var(--green)" : "var(--red)",
+                    fontWeight: 500,
+                    opacity: 0.75,
+                  }}
+                >
+                  {isPositive ? "+" : ""}{pct.toFixed(2)}%
+                </p>
+              </>
+            ) : (
+              <>
+                <p style={{ fontSize: "0.8rem", fontWeight: 600, color: "var(--text-muted)", marginBottom: "2px" }}>
+                  --
+                </p>
+                <p style={{ fontSize: "0.75rem", color: "var(--text-muted)", fontWeight: 500, opacity: 0.75 }}>
+                  --
+                </p>
+              </>
+            )}
           </div>
 
-          <Sparkline data={sparkData} positive={isPositive} width={60} height={24} />
+          {hasData ? (
+            <Sparkline data={sparkData} positive={isPositive} width={60} height={24} />
+          ) : (
+            <span style={{ fontSize: "0.68rem", color: "var(--text-muted)", opacity: 0.85 }}>
+              Waiting for feed
+            </span>
+          )}
         </div>
       </div>
     </div>

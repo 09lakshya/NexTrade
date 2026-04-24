@@ -2,12 +2,21 @@ import sqlite3
 import os
 import bcrypt
 import jwt
+import warnings
 from datetime import datetime, timedelta
 
 DB_PATH = os.path.join(os.path.dirname(__file__), "portfolio.db")
-JWT_SECRET = os.environ.get("JWT_SECRET", "nex_trade_secret_key_change_in_prod")
+JWT_SECRET = os.environ.get("JWT_SECRET", "")
 JWT_ALGORITHM = "HS256"
 JWT_EXPIRY_DAYS = 30  # Long-lived tokens for "keep me signed in"
+
+if not JWT_SECRET:
+    JWT_SECRET = "dev_only_change_me"
+    warnings.warn(
+        "JWT_SECRET is not set. Using insecure development default. "
+        "Set JWT_SECRET in production.",
+        RuntimeWarning,
+    )
 
 
 def init_users_db():
@@ -93,6 +102,47 @@ def get_user(user_id: int) -> dict | None:
         return None
 
     return dict(row)
+
+
+def update_profile(user_id: int, name: str) -> dict | None:
+    """Update editable profile fields and return updated user."""
+    cleaned_name = (name or "").strip()
+    if not cleaned_name:
+        return None
+
+    conn = sqlite3.connect(DB_PATH)
+    c = conn.cursor()
+    c.execute("UPDATE users SET name = ? WHERE id = ?", (cleaned_name, user_id))
+    conn.commit()
+    updated = c.rowcount > 0
+    conn.close()
+
+    if not updated:
+        return None
+    return get_user(user_id)
+
+
+def change_password(user_id: int, current_password: str, new_password: str) -> bool:
+    """Change password for a user after verifying the current password."""
+    conn = sqlite3.connect(DB_PATH)
+    conn.row_factory = sqlite3.Row
+    c = conn.cursor()
+    c.execute("SELECT password_hash FROM users WHERE id = ?", (user_id,))
+    row = c.fetchone()
+
+    if not row:
+        conn.close()
+        return False
+
+    if not bcrypt.checkpw(current_password.encode("utf-8"), row["password_hash"].encode("utf-8")):
+        conn.close()
+        return False
+
+    new_hash = bcrypt.hashpw(new_password.encode("utf-8"), bcrypt.gensalt()).decode("utf-8")
+    c.execute("UPDATE users SET password_hash = ? WHERE id = ?", (new_hash, user_id))
+    conn.commit()
+    conn.close()
+    return True
 
 
 def create_token(user_id: int) -> str:

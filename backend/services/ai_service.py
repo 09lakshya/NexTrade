@@ -5,6 +5,45 @@ from textblob import TextBlob
 import requests
 from bs4 import BeautifulSoup
 
+YF_SYMBOL_OVERRIDES = {
+    "TATAMOTORS": "TATAMOTORS.BO",
+    "TATAMOTORS.NS": "TATAMOTORS.BO",
+}
+
+
+def _ticker_candidates(symbol: str):
+    symbol = str(symbol).strip().upper()
+    if symbol in YF_SYMBOL_OVERRIDES:
+        override = YF_SYMBOL_OVERRIDES[symbol]
+        if override.endswith(".BO"):
+            base = override[:-3]
+            return [override, f"{base}.NS"]
+        if override.endswith(".NS"):
+            base = override[:-3]
+            return [override, f"{base}.BO"]
+        return [override]
+    if symbol.startswith("^"):
+        return [symbol]
+    if symbol.endswith(".NS"):
+        base = symbol[:-3]
+        return [symbol, f"{base}.BO"]
+    if symbol.endswith(".BO"):
+        base = symbol[:-3]
+        return [symbol, f"{base}.NS"]
+    return [f"{symbol}.NS", f"{symbol}.BO"]
+
+
+def _get_working_ticker(symbol: str):
+    for candidate in _ticker_candidates(symbol):
+        try:
+            df = yf.Ticker(candidate).history(period="5d")
+            if not df.empty:
+                return candidate
+        except Exception:
+            continue
+    return symbol
+
+
 def calculate_rsi(prices, period=14):
     delta = prices.diff()
     gain = (delta.where(delta > 0, 0)).rolling(period).mean()
@@ -48,7 +87,7 @@ def analyze_sentiment(text):
 def fetch_news_sentiment(symbol: str):
     """Fetch and analyze news sentiment for a stock"""
     try:
-        stock = yf.Ticker(symbol)
+        stock = yf.Ticker(_get_working_ticker(symbol))
         
         # Try to get news from yfinance
         try:
@@ -91,7 +130,7 @@ def fetch_news_sentiment(symbol: str):
 def get_fundamental_data(symbol: str):
     """Get fundamental data for a stock"""
     try:
-        stock = yf.Ticker(symbol)
+        stock = yf.Ticker(_get_working_ticker(symbol))
         info = stock.info
         
         fundamentals = {
@@ -176,8 +215,8 @@ def calculate_fundamental_score(fundamentals: dict):
 def predict_stock(symbol: str):
     try:
         # Get more historical data for better accuracy
-        stock = yf.Ticker(symbol)
-        df = stock.history(period="6mo")  # 6 months of daily data
+        stock = yf.Ticker(_get_working_ticker(symbol))
+        df = stock.history(period="1y")  # 1 year of daily data to support long moving averages
         
         if df.empty or len(df) < 50:
             return {"error": "Not enough data"}
@@ -209,7 +248,7 @@ def predict_stock(symbol: str):
         # Moving Averages
         ma20 = close.rolling(20).mean().iloc[-1]
         ma50 = close.rolling(50).mean().iloc[-1]
-        ma200 = close.rolling(200).mean().iloc[-1]
+        ma200 = close.rolling(200).mean().iloc[-1] if len(close) >= 200 else np.nan
         
         # Volume Analysis
         avg_volume = volume.rolling(20).mean().iloc[-1]
@@ -227,19 +266,27 @@ def predict_stock(symbol: str):
         trend_score = 0
         confidence_factors = []
         
-        # MA20 > MA50 > MA200 = Strong Bullish
-        if ma20 > ma50 > ma200:
-            trend_score += 2
-            confidence_factors.append(25)
-        elif ma20 < ma50 < ma200:
-            trend_score -= 2
-            confidence_factors.append(25)
-        elif ma20 > ma50:
-            trend_score += 1
-            confidence_factors.append(15)
-        elif ma20 < ma50:
-            trend_score -= 1
-            confidence_factors.append(15)
+        # MA trend analysis
+        if not np.isnan(ma200):
+            if ma20 > ma50 > ma200:
+                trend_score += 2
+                confidence_factors.append(25)
+            elif ma20 < ma50 < ma200:
+                trend_score -= 2
+                confidence_factors.append(25)
+            elif ma20 > ma50:
+                trend_score += 1
+                confidence_factors.append(15)
+            elif ma20 < ma50:
+                trend_score -= 1
+                confidence_factors.append(15)
+        else:
+            if ma20 > ma50:
+                trend_score += 1
+                confidence_factors.append(15)
+            elif ma20 < ma50:
+                trend_score -= 1
+                confidence_factors.append(15)
         
         # RSI Analysis
         if rsi > 70:  # Overbought
@@ -295,12 +342,16 @@ def predict_stock(symbol: str):
         if trend_score > 0:
             trend = "BULLISH"
             base_confidence = min(50 + abs(trend_score) * 5, 95)
-        else:
+        elif trend_score < 0:
             trend = "BEARISH"
             base_confidence = min(50 + abs(trend_score) * 5, 95)
+        else:
+            trend = "NEUTRAL"
+            base_confidence = 50
         
         # Dynamic confidence based on multiple factors (including sentiment & fundamentals)
-        confidence = int(min(100, sum(confidence_factors) * 0.85))
+        factor_confidence = min(100, sum(confidence_factors) * 0.85)
+        confidence = int(min(100, round((base_confidence * 0.45) + (factor_confidence * 0.55))))
 
         # ===== PRICE PREDICTION =====
         # Calculate volatility
@@ -319,11 +370,13 @@ def predict_stock(symbol: str):
                 predicted_price = current_price * (1 + volatility * 1.5 + combined_adjustment)
             else:
                 predicted_price = current_price * (1 + volatility * 0.5 + combined_adjustment)
-        else:
+        elif trend == "BEARISH":
             if rsi > 30:
                 predicted_price = current_price * (1 - volatility * 1.5 + combined_adjustment)
             else:
                 predicted_price = current_price * (1 - volatility * 0.5 + combined_adjustment)
+        else:
+            predicted_price = current_price * (1 + combined_adjustment)
 
         # ===== DAY CLOSE PREDICTION =====
         x = np.arange(len(close))

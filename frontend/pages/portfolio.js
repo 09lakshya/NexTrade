@@ -160,7 +160,6 @@ function HoldingRow({ h, onRemove }) {
 // ── Main Portfolio Page ───────────────────────────────────────────────────
 export default function Portfolio() {
   const { user } = useAuth();
-  const userId = user ? String(user.id) : null;
   const [holdings, setHoldings]   = useState([]);
   const [loading, setLoading]     = useState(true);
   const [showForm, setShowForm]   = useState(false);
@@ -174,14 +173,14 @@ export default function Portfolio() {
   const [formErr, setFormErr]         = useState("");
 
   useEffect(() => {
-    if (!userId) return;
+    if (!user) return;
     fetchPortfolio();
-  }, [userId]);
+  }, [user]);
 
   const fetchPortfolio = async () => {
     setLoading(true);
     try {
-      const res = await API.get(`/portfolio/${userId}`);
+      const res = await API.get("/portfolio/me");
       setHoldings(Array.isArray(res.data) ? res.data : []);
     } catch {
       setHoldings([]);
@@ -214,7 +213,6 @@ export default function Portfolio() {
     setFormErr(""); setAdding(true);
     try {
       await API.post("/portfolio/add", {
-        user_id: userId,
         symbol: selSymbol,
         company_name: selSymbol,
         quantity: parseFloat(quantity),
@@ -232,7 +230,7 @@ export default function Portfolio() {
 
   const removeHolding = async (id) => {
     try {
-      await API.delete(`/portfolio/${id}?user_id=${userId}`);
+      await API.delete(`/portfolio/${id}`);
       await fetchPortfolio();
     } catch {
       alert("Failed to remove. Please try again.");

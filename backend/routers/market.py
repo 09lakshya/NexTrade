@@ -1,5 +1,7 @@
 from fastapi import APIRouter, WebSocket, WebSocketDisconnect
 import asyncio
+import io
+from contextlib import redirect_stdout, redirect_stderr
 import yfinance as yf
 from services.data_service import get_stock_price, get_history
 
@@ -23,11 +25,19 @@ NIFTY50_SYMBOLS = [
 # =========================
 # 🔧 GLOBALS & HELPERS
 # =========================
+YF_TICKER_OVERRIDES = {
+    "TATAMOTORS": "TATAMOTORS.BO",
+}
+
 def get_ticker(symbol):
     if symbol == "NIFTY50":
         return "^NSEI"
     elif symbol == "SENSEX":
         return "^BSESN"
+    elif symbol in YF_TICKER_OVERRIDES:
+        return YF_TICKER_OVERRIDES[symbol]
+    elif symbol.endswith(".NS"):
+        return symbol
     else:
         return symbol + ".NS"
 
@@ -49,7 +59,10 @@ async def update_market_cache():
     while True:
         try:
             # Bulk download all tickers at once (fast!)
-            df = yf.download(ticker_string, period="5d", interval="1d", progress=False)
+            # yfinance can print noisy "Failed download" messages directly to stdout/stderr.
+            # Suppress those here and let our own fallback/cache handling decide behavior.
+            with redirect_stdout(io.StringIO()), redirect_stderr(io.StringIO()):
+                df = yf.download(ticker_string, period="5d", interval="1d", progress=False)
             
             new_data = {}
             if "Close" in df:
@@ -142,3 +155,4 @@ def get_market(symbol: str):
 def history(symbol: str, period: str = "1mo"):
     ticker = get_ticker(symbol)
     return get_history(ticker, period)
+

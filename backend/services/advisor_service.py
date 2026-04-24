@@ -3,6 +3,11 @@ import numpy as np
 from concurrent.futures import ThreadPoolExecutor, as_completed
 import redis, json, hashlib, os
 
+YF_SYMBOL_OVERRIDES = {
+    "TATAMOTORS": "TATAMOTORS.BO",
+    "TATAMOTORS.NS": "TATAMOTORS.BO",
+}
+
 try:
     cache = redis.Redis(
         host=os.getenv('REDIS_HOST', 'localhost'),
@@ -14,6 +19,38 @@ try:
 except:
     CACHE_AVAILABLE = False
     cache = None
+
+def _ticker_candidates(symbol: str):
+    symbol = str(symbol).strip().upper()
+    if symbol in YF_SYMBOL_OVERRIDES:
+        override = YF_SYMBOL_OVERRIDES[symbol]
+        if override.endswith(".BO"):
+            base = override[:-3]
+            return [override, f"{base}.NS"]
+        if override.endswith(".NS"):
+            base = override[:-3]
+            return [override, f"{base}.BO"]
+        return [override]
+    if symbol.startswith("^"):
+        return [symbol]
+    if symbol.endswith(".NS"):
+        base = symbol[:-3]
+        return [symbol, f"{base}.BO"]
+    if symbol.endswith(".BO"):
+        base = symbol[:-3]
+        return [symbol, f"{base}.NS"]
+    return [f"{symbol}.NS", f"{symbol}.BO"]
+
+
+def _working_ticker(symbol: str):
+    for candidate in _ticker_candidates(symbol):
+        try:
+            df = yf.Ticker(candidate).history(period="5d")
+            if not df.empty:
+                return candidate
+        except Exception:
+            continue
+    return symbol
 
 # ── RSI helper (self-contained so this service has no circular imports) ──────
 def _rsi(prices, period=14):
@@ -85,25 +122,26 @@ DURATION_MULTIPLIERS = {
 
 # ── Fetch signals for one ticker ──────────────────────────────────────────────
 def _fetch_signals(symbol: str):
-    try:
-        df = yf.Ticker(symbol).history(period="1mo", interval="1d")
-        if df.empty or len(df) < 14:
-            return None
-        close = df["Close"]
-        current = float(close.iloc[-1])
-        window  = min(20, len(close))
-        ma20    = float(close.rolling(window).mean().iloc[-1])
-        rsi_val = float(_rsi(close).iloc[-1])
-        if np.isnan(rsi_val):
-            rsi_val = 50.0
-        return {
-            "current_price": round(current, 2),
-            "rsi":           round(rsi_val, 2),
-            "trend":         "BULLISH" if current > ma20 else "BEARISH",
-        }
-    except Exception as e:
-        print(f"Advisor signal error [{symbol}]: {e}")
-        return None
+    for ticker_symbol in _ticker_candidates(symbol):
+        try:
+            df = yf.Ticker(ticker_symbol).history(period="1mo", interval="1d")
+            if df.empty or len(df) < 14:
+                continue
+            close = df["Close"]
+            current = float(close.iloc[-1])
+            window  = min(20, len(close))
+            ma20    = float(close.rolling(window).mean().iloc[-1])
+            rsi_val = float(_rsi(close).iloc[-1])
+            if np.isnan(rsi_val):
+                rsi_val = 50.0
+            return {
+                "current_price": round(current, 2),
+                "rsi":           round(rsi_val, 2),
+                "trend":         "BULLISH" if current > ma20 else "BEARISH",
+            }
+        except Exception:
+            continue
+    return None
 
 
 # ── Scoring with news sentiment ───────────────────────────────────────────────
@@ -228,7 +266,7 @@ def get_recommendations(goal: str, duration: str, risk: str, budget: float):
         
         # Fetch sentiment for this stock (0-100)
         try:
-            stock_obj = yf.Ticker(sym)
+            stock_obj = yf.Ticker(_working_ticker(sym))
             news = getattr(stock_obj, 'news', [])
             sentiments = []
             for item in news[:5]:  # Top 5 news items
@@ -273,7 +311,7 @@ def get_recommendations(goal: str, duration: str, risk: str, budget: float):
         shares  = int(per_stock / price) if price > 0 else 0
 
         results.append({
-            "symbol":               sym.replace(".NS", ""),
+            "symbol":               sym.replace(".NS", "").replace(".BO", ""),
             "name":                 meta.get("name", sym),
             "sector":               meta.get("sector", ""),
             "description":          meta.get("desc", ""),
@@ -292,3 +330,7 @@ def get_recommendations(goal: str, duration: str, risk: str, budget: float):
         cache.setex(key, 900, json.dumps(results))
         
     return results
+
+
+
+

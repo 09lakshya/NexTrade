@@ -29,10 +29,11 @@ def calculate_investment(principal: float, annual_rate: float, years: int, infla
         # Return Percentage
         return_percentage = (profit / principal) * 100
         
-        # Real Return = [(1 + nominal_return) / (1 + inflation)] - 1
-        # Using: Real Return % = Nominal Return % adjusted for inflation
+        # Real return compounds over time after adjusting for inflation each year
         if inflation_rate > 0:
-            real_return_percentage = (((1 + annual_rate) / (1 + inflation_rate)) - 1) * 100 * years
+            real_annual_rate = ((1 + annual_rate) / (1 + inflation_rate)) - 1
+            real_future_value = principal * ((1 + real_annual_rate) ** years)
+            real_return_percentage = ((real_future_value - principal) / principal) * 100
         else:
             real_return_percentage = return_percentage
         

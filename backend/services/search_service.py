@@ -6,6 +6,15 @@ file_path = os.path.join(BASE_DIR, "stocks.json")
 with open(file_path, encoding="utf-8") as f:
     STOCKS = json.load(f)
 
+SYMBOL_ALIASES = [
+    {"symbol": "TATAMOTORS", "name": "Tata Motors Limited"},
+]
+
+existing_symbols = {s["symbol"] for s in STOCKS}
+for alias in SYMBOL_ALIASES:
+    if alias["symbol"] not in existing_symbols:
+        STOCKS.append(alias)
+
 
 TRENDING = ["RELIANCE", "TCS", "INFY", "HDFCBANK"]
 

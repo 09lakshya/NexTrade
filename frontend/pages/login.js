@@ -14,6 +14,8 @@ export default function LoginPage() {
   const [name, setName] = useState("");
   const [age, setAge] = useState("");
   const [rememberMe, setRememberMe] = useState(true);
+  const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPw, setShowConfirmPw] = useState(false);
   const [error, setError] = useState("");
   const [submitting, setSubmitting] = useState(false);
 
@@ -110,11 +112,11 @@ export default function LoginPage() {
 
   const inputStyle = {
     width: "100%",
-    background: "rgba(255,255,255,0.04)",
-    border: "1.5px solid rgba(255,255,255,0.1)",
+    background: "var(--input-bg)",
+    border: "1.5px solid var(--input-border)",
     borderRadius: "12px",
     padding: "14px 16px",
-    color: "#f1f5f9",
+    color: "var(--text-primary)",
     fontSize: "0.95rem",
     fontFamily: "inherit",
     outline: "none",
@@ -125,7 +127,7 @@ export default function LoginPage() {
     display: "block",
     fontSize: "0.7rem",
     fontWeight: 700,
-    color: "rgba(255,255,255,0.4)",
+    color: "var(--text-muted)",
     textTransform: "uppercase",
     letterSpacing: "0.08em",
     marginBottom: "8px",
@@ -227,7 +229,7 @@ export default function LoginPage() {
             </div>
             <p
               style={{
-                color: "rgba(255,255,255,0.35)",
+                color: "var(--text-muted)",
                 fontSize: "0.9rem",
                 fontWeight: 400,
               }}
@@ -241,13 +243,13 @@ export default function LoginPage() {
           {/* Card */}
           <div
             style={{
-              background: "rgba(13,18,36,0.75)",
-              border: "1px solid rgba(255,255,255,0.08)",
+              background: "var(--bg-card)",
+              border: "1px solid var(--border-subtle)",
               borderRadius: "24px",
               padding: "36px 32px",
               backdropFilter: "blur(24px)",
               WebkitBackdropFilter: "blur(24px)",
-              boxShadow: "0 24px 80px rgba(0,0,0,0.5)",
+              boxShadow: "var(--shadow-card)",
               position: "relative",
               overflow: "hidden",
             }}
@@ -270,7 +272,7 @@ export default function LoginPage() {
                 fontFamily: "'Space Grotesk', sans-serif",
                 fontWeight: 800,
                 fontSize: "1.3rem",
-                color: "#f1f5f9",
+                color: "var(--text-primary)",
                 marginBottom: "24px",
                 letterSpacing: "-0.01em",
               }}
@@ -298,10 +300,10 @@ export default function LoginPage() {
                       placeholder="John Doe"
                       style={inputStyle}
                       onFocus={(e) =>
-                        (e.target.style.borderColor = "rgba(0,229,255,0.5)")
+                        (e.target.style.borderColor = "var(--accent)")
                       }
                       onBlur={(e) =>
-                        (e.target.style.borderColor = "rgba(255,255,255,0.1)")
+                        (e.target.style.borderColor = "var(--input-border)")
                       }
                     />
                   </div>
@@ -316,10 +318,10 @@ export default function LoginPage() {
                       max="150"
                       style={inputStyle}
                       onFocus={(e) =>
-                        (e.target.style.borderColor = "rgba(0,229,255,0.5)")
+                        (e.target.style.borderColor = "var(--accent)")
                       }
                       onBlur={(e) =>
-                        (e.target.style.borderColor = "rgba(255,255,255,0.1)")
+                        (e.target.style.borderColor = "var(--input-border)")
                       }
                     />
                   </div>
@@ -337,10 +339,10 @@ export default function LoginPage() {
                   autoComplete="email"
                   style={inputStyle}
                   onFocus={(e) =>
-                    (e.target.style.borderColor = "rgba(0,229,255,0.5)")
+                    (e.target.style.borderColor = "var(--accent)")
                   }
                   onBlur={(e) =>
-                    (e.target.style.borderColor = "rgba(255,255,255,0.1)")
+                    (e.target.style.borderColor = "var(--input-border)")
                   }
                 />
               </div>
@@ -348,22 +350,59 @@ export default function LoginPage() {
               {/* Password */}
               <div style={{ marginBottom: mode === "signup" ? "18px" : "20px" }}>
                 <label style={labelStyle}>Password</label>
-                <input
-                  type="password"
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  placeholder="••••••••"
-                  autoComplete={
-                    mode === "login" ? "current-password" : "new-password"
-                  }
-                  style={inputStyle}
-                  onFocus={(e) =>
-                    (e.target.style.borderColor = "rgba(0,229,255,0.5)")
-                  }
-                  onBlur={(e) =>
-                    (e.target.style.borderColor = "rgba(255,255,255,0.1)")
-                  }
-                />
+                <div style={{ position: "relative" }}>
+                  <input
+                    type={showPassword ? "text" : "password"}
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    placeholder="••••••••"
+                    autoComplete={
+                      mode === "login" ? "current-password" : "new-password"
+                    }
+                    style={{ ...inputStyle, paddingRight: "46px" }}
+                    onFocus={(e) =>
+                      (e.target.style.borderColor = "var(--accent)")
+                    }
+                    onBlur={(e) =>
+                      (e.target.style.borderColor = "var(--input-border)")
+                    }
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowPassword(!showPassword)}
+                    style={{
+                      position: "absolute",
+                      right: "14px",
+                      top: "50%",
+                      transform: "translateY(-50%)",
+                      background: "none",
+                      border: "none",
+                      cursor: "pointer",
+                      padding: "4px",
+                      color: "var(--text-muted)",
+                      display: "flex",
+                      alignItems: "center",
+                      transition: "color 0.2s",
+                    }}
+                    onMouseEnter={(e) => (e.currentTarget.style.color = "var(--accent)")}
+                    onMouseLeave={(e) => (e.currentTarget.style.color = "var(--text-muted)")}
+                    tabIndex={-1}
+                    title={showPassword ? "Hide password" : "Show password"}
+                  >
+                    {showPassword ? (
+                      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                        <path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94"/>
+                        <path d="M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19"/>
+                        <line x1="1" y1="1" x2="23" y2="23"/>
+                      </svg>
+                    ) : (
+                      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                        <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/>
+                        <circle cx="12" cy="12" r="3"/>
+                      </svg>
+                    )}
+                  </button>
+                </div>
               </div>
 
               {/* Confirm Password — signup only */}
@@ -375,20 +414,57 @@ export default function LoginPage() {
                   }}
                 >
                   <label style={labelStyle}>Confirm Password</label>
-                  <input
-                    type="password"
-                    value={confirmPw}
-                    onChange={(e) => setConfirmPw(e.target.value)}
-                    placeholder="••••••••"
-                    autoComplete="new-password"
-                    style={inputStyle}
-                    onFocus={(e) =>
-                      (e.target.style.borderColor = "rgba(0,229,255,0.5)")
-                    }
-                    onBlur={(e) =>
-                      (e.target.style.borderColor = "rgba(255,255,255,0.1)")
-                    }
-                  />
+                  <div style={{ position: "relative" }}>
+                    <input
+                      type={showConfirmPw ? "text" : "password"}
+                      value={confirmPw}
+                      onChange={(e) => setConfirmPw(e.target.value)}
+                      placeholder="••••••••"
+                      autoComplete="new-password"
+                      style={{ ...inputStyle, paddingRight: "46px" }}
+                      onFocus={(e) =>
+                        (e.target.style.borderColor = "var(--accent)")
+                      }
+                      onBlur={(e) =>
+                        (e.target.style.borderColor = "var(--input-border)")
+                      }
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setShowConfirmPw(!showConfirmPw)}
+                      style={{
+                        position: "absolute",
+                        right: "14px",
+                        top: "50%",
+                        transform: "translateY(-50%)",
+                        background: "none",
+                        border: "none",
+                        cursor: "pointer",
+                        padding: "4px",
+                        color: "var(--text-muted)",
+                        display: "flex",
+                        alignItems: "center",
+                        transition: "color 0.2s",
+                      }}
+                      onMouseEnter={(e) => (e.currentTarget.style.color = "var(--accent)")}
+                      onMouseLeave={(e) => (e.currentTarget.style.color = "var(--text-muted)")}
+                      tabIndex={-1}
+                      title={showConfirmPw ? "Hide password" : "Show password"}
+                    >
+                      {showConfirmPw ? (
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                          <path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94"/>
+                          <path d="M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19"/>
+                          <line x1="1" y1="1" x2="23" y2="23"/>
+                        </svg>
+                      ) : (
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                          <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/>
+                          <circle cx="12" cy="12" r="3"/>
+                        </svg>
+                      )}
+                    </button>
+                  </div>
                 </div>
               )}
 
@@ -409,11 +485,11 @@ export default function LoginPage() {
                     borderRadius: "5px",
                     border: `1.5px solid ${
                       rememberMe
-                        ? "rgba(0,229,255,0.6)"
-                        : "rgba(255,255,255,0.15)"
+                        ? "var(--accent)"
+                        : "var(--border-medium)"
                     }`,
                     background: rememberMe
-                      ? "rgba(0,229,255,0.15)"
+                      ? "var(--accent-dim)"
                       : "transparent",
                     display: "flex",
                     alignItems: "center",
@@ -442,7 +518,7 @@ export default function LoginPage() {
                   onClick={() => setRememberMe(!rememberMe)}
                   style={{
                     fontSize: "0.85rem",
-                    color: "rgba(255,255,255,0.5)",
+                    color: "var(--text-muted)",
                     cursor: "pointer",
                     userSelect: "none",
                   }}
@@ -529,7 +605,7 @@ export default function LoginPage() {
                 textAlign: "center",
                 marginTop: "24px",
                 fontSize: "0.85rem",
-                color: "rgba(255,255,255,0.35)",
+                color: "var(--text-muted)",
               }}
             >
               {mode === "login"
@@ -560,7 +636,7 @@ export default function LoginPage() {
               textAlign: "center",
               marginTop: "28px",
               fontSize: "0.72rem",
-              color: "rgba(255,255,255,0.15)",
+              color: "var(--text-muted)",
             }}
           >
             By continuing, you agree to NexTrade's Terms of Service.
