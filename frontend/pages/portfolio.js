@@ -10,13 +10,13 @@ function AllocationDonut({ holdings, size = 100 }) {
   const total = holdings.reduce((s, h) => s + h.invested, 0);
   if (total === 0) return null;
 
-  const colors = ["#00e5ff", "#00e676", "#e040fb", "#ffd740", "#ff9100", "#2979ff", "#ff1744", "#69f0ae"];
+  const colors = ["var(--accent)", "var(--green)", "var(--purple)", "var(--gold)", "var(--orange)", "var(--blue)", "var(--red)", "var(--green-dim)"];
   let cumulative = 0;
   const r = 38, cx = 50, cy = 50, circumference = 2 * Math.PI * r;
 
   return (
     <svg width={size} height={size} viewBox="0 0 100 100">
-      <circle cx={cx} cy={cy} r={r} fill="none" stroke="rgba(255,255,255,0.05)" strokeWidth="12" />
+      <circle cx={cx} cy={cy} r={r} fill="none" stroke="var(--border-subtle)" strokeWidth="12" />
       {holdings.map((h, i) => {
         const frac = h.invested / total;
         const arc = frac * circumference;
@@ -35,7 +35,7 @@ function AllocationDonut({ holdings, size = 100 }) {
           />
         );
       })}
-      <text x={cx} y={cy + 5} textAnchor="middle" fill="#f1f5f9" fontSize="10" fontWeight="800" fontFamily="Space Grotesk, sans-serif">
+      <text x={cx} y={cy + 5} textAnchor="middle" fill="var(--text-primary)" fontSize="10" fontWeight="800" fontFamily="Space Grotesk, sans-serif">
         {holdings.length}
       </text>
     </svg>
@@ -43,12 +43,12 @@ function AllocationDonut({ holdings, size = 100 }) {
 }
 
 // ── Summary metric card ───────────────────────────────────────────────────
-function MetricCard({ label, value, color = "#f1f5f9", icon, delta }) {
+function MetricCard({ label, value, color = "var(--text-primary)", icon, delta }) {
   return (
     <div
       style={{
-        background: "rgba(13,18,36,0.7)",
-        border: "1px solid rgba(255,255,255,0.07)",
+        background: "var(--bg-card)",
+        border: "1px solid var(--border-subtle)",
         borderRadius: "clamp(14px, 2vw, 18px)",
         padding: "clamp(14px, 2.5vw, 20px) clamp(16px, 2.5vw, 22px)",
         backdropFilter: "blur(12px)",
@@ -56,14 +56,14 @@ function MetricCard({ label, value, color = "#f1f5f9", icon, delta }) {
         position: "relative",
         overflow: "hidden",
       }}
-      onMouseEnter={e => { e.currentTarget.style.border = "1px solid rgba(0,229,255,0.2)"; e.currentTarget.style.transform = "translateY(-2px)"; }}
-      onMouseLeave={e => { e.currentTarget.style.border = "1px solid rgba(255,255,255,0.07)"; e.currentTarget.style.transform = "translateY(0)"; }}
+      onMouseEnter={e => { e.currentTarget.style.border = "1px solid var(--accent-glow)"; e.currentTarget.style.transform = "translateY(-2px)"; }}
+      onMouseLeave={e => { e.currentTarget.style.border = "1px solid var(--border-subtle)"; e.currentTarget.style.transform = "translateY(0)"; }}
     >
       <div style={{ position: "absolute", top: 0, left: 0, right: 0, height: "2px", background: `linear-gradient(90deg, ${color}, transparent)`, opacity: 0.6 }} />
       {icon && <p style={{ fontSize: "1.1rem", marginBottom: "8px" }}>{icon}</p>}
-      <p style={{ fontSize: "0.65rem", fontWeight: 700, color: "rgba(255,255,255,0.35)", textTransform: "uppercase", letterSpacing: "0.08em", marginBottom: "8px" }}>{label}</p>
+      <p style={{ fontSize: "0.65rem", fontWeight: 700, color: "var(--text-muted)", textTransform: "uppercase", letterSpacing: "0.08em", marginBottom: "8px" }}>{label}</p>
       <p style={{ fontSize: "clamp(1.1rem, 2.5vw, 1.6rem)", fontWeight: 900, color, fontFamily: "'Space Grotesk', sans-serif", letterSpacing: "-0.02em" }}>{value}</p>
-      {delta && <p style={{ fontSize: "0.75rem", color: "rgba(255,255,255,0.35)", marginTop: "4px" }}>{delta}</p>}
+      {delta && <p style={{ fontSize: "0.75rem", color: "var(--text-muted)", marginTop: "4px" }}>{delta}</p>}
     </div>
   );
 }
@@ -73,7 +73,7 @@ function HoldingRow({ h, onRemove }) {
   const profit = h.pnl >= 0;
   const hasPrice = h.current_price > 0;
   const fmt = n => n.toLocaleString("en-IN", { maximumFractionDigits: 0 });
-  const pnlColor = profit ? "#00e676" : "#ff1744";
+  const pnlColor = profit ? "var(--green)" : "var(--red)";
   const [removing, setRemoving] = useState(false);
 
   const handleRemove = async () => {
@@ -87,33 +87,33 @@ function HoldingRow({ h, onRemove }) {
   return (
     <tr
       style={{
-        borderBottom: "1px solid rgba(255,255,255,0.04)",
+        borderBottom: "1px solid var(--border-subtle)",
         transition: "background 0.2s",
       }}
-      onMouseEnter={e => { e.currentTarget.style.background = "rgba(0,229,255,0.025)"; }}
+      onMouseEnter={e => { e.currentTarget.style.background = "var(--hover-overlay)"; }}
       onMouseLeave={e => { e.currentTarget.style.background = "transparent"; }}
     >
       {/* Stock */}
       <td style={{ padding: "16px 18px" }}>
-        <p style={{ fontWeight: 800, color: "#00e5ff", fontSize: "0.9rem", fontFamily: "'Space Grotesk', sans-serif", marginBottom: "2px" }}>{h.symbol}</p>
-        <p style={{ fontSize: "0.7rem", color: "rgba(255,255,255,0.3)" }}>{h.added_on}</p>
+        <p style={{ fontWeight: 800, color: "var(--accent)", fontSize: "0.9rem", fontFamily: "'Space Grotesk', sans-serif", marginBottom: "2px" }}>{h.symbol}</p>
+        <p style={{ fontSize: "0.7rem", color: "var(--text-muted)" }}>{h.added_on}</p>
       </td>
       {/* Qty */}
-      <td style={{ padding: "16px 18px", textAlign: "right", fontWeight: 600, color: "rgba(255,255,255,0.7)", fontSize: "0.875rem" }}>{h.quantity}</td>
+      <td style={{ padding: "16px 18px", textAlign: "right", fontWeight: 600, color: "var(--text-secondary)", fontSize: "0.875rem" }}>{h.quantity}</td>
       {/* Buy ₹ */}
-      <td style={{ padding: "16px 18px", textAlign: "right", fontWeight: 600, color: "rgba(255,255,255,0.7)", fontSize: "0.875rem" }}>₹{h.buy_price}</td>
+      <td style={{ padding: "16px 18px", textAlign: "right", fontWeight: 600, color: "var(--text-secondary)", fontSize: "0.875rem" }}>₹{h.buy_price}</td>
       {/* Current ₹ */}
-      <td style={{ padding: "16px 18px", textAlign: "right", fontWeight: 700, color: "#f1f5f9", fontSize: "0.875rem" }}>
-        {hasPrice ? `₹${h.current_price}` : <span style={{ color: "rgba(255,255,255,0.25)" }}>N/A</span>}
+      <td style={{ padding: "16px 18px", textAlign: "right", fontWeight: 700, color: "var(--text-primary)", fontSize: "0.875rem" }}>
+        {hasPrice ? `₹${h.current_price}` : <span style={{ color: "var(--text-muted)" }}>N/A</span>}
       </td>
       {/* Invested */}
-      <td style={{ padding: "16px 18px", textAlign: "right", fontWeight: 600, color: "rgba(255,255,255,0.6)", fontSize: "0.875rem" }}>₹{fmt(h.invested)}</td>
+      <td style={{ padding: "16px 18px", textAlign: "right", fontWeight: 600, color: "var(--text-muted)", fontSize: "0.875rem" }}>₹{fmt(h.invested)}</td>
       {/* Value */}
-      <td style={{ padding: "16px 18px", textAlign: "right", fontWeight: 700, color: "#f1f5f9", fontSize: "0.875rem" }}>
-        {hasPrice ? `₹${fmt(h.current_value)}` : <span style={{ color: "rgba(255,255,255,0.2)" }}>—</span>}
+      <td style={{ padding: "16px 18px", textAlign: "right", fontWeight: 700, color: "var(--text-primary)", fontSize: "0.875rem" }}>
+        {hasPrice ? `₹${fmt(h.current_value)}` : <span style={{ color: "var(--text-muted)" }}>—</span>}
       </td>
       {/* P&L */}
-      <td style={{ padding: "16px 18px", textAlign: "right", fontWeight: 800, color: hasPrice ? pnlColor : "rgba(255,255,255,0.2)", fontSize: "0.875rem" }}>
+      <td style={{ padding: "16px 18px", textAlign: "right", fontWeight: 800, color: hasPrice ? pnlColor : "var(--text-muted)", fontSize: "0.875rem" }}>
         {hasPrice ? `${profit ? "+" : "−"}₹${fmt(Math.abs(h.pnl))}` : "—"}
       </td>
       {/* P&L % */}
@@ -122,14 +122,14 @@ function HoldingRow({ h, onRemove }) {
           <span style={{
             padding: "3px 8px",
             borderRadius: "20px",
-            background: profit ? "rgba(0,230,118,0.12)" : "rgba(255,23,68,0.12)",
+            background: profit ? "var(--green-dim)" : "var(--red-dim)",
             color: pnlColor,
             fontWeight: 800,
             fontSize: "0.78rem",
           }}>
             {profit ? "+" : ""}{pnlPct.toFixed(2)}%
           </span>
-        ) : <span style={{ color: "rgba(255,255,255,0.2)" }}>—</span>}
+        ) : <span style={{ color: "var(--text-muted)" }}>—</span>}
       </td>
       {/* Remove */}
       <td style={{ padding: "16px 18px", textAlign: "center" }}>
@@ -137,18 +137,18 @@ function HoldingRow({ h, onRemove }) {
           onClick={handleRemove}
           disabled={removing}
           style={{
-            background: "rgba(255,23,68,0.08)",
-            border: "1px solid rgba(255,23,68,0.2)",
+            background: "var(--red-dim)",
+            border: "1px solid var(--red-dim)",
             borderRadius: "8px",
             padding: "5px 10px",
             cursor: "pointer",
-            color: "#ff1744",
+            color: "var(--red)",
             fontSize: "0.8rem",
             transition: "all 0.2s",
             opacity: removing ? 0.5 : 1,
           }}
-          onMouseEnter={e => { e.currentTarget.style.background = "rgba(255,23,68,0.18)"; }}
-          onMouseLeave={e => { e.currentTarget.style.background = "rgba(255,23,68,0.08)"; }}
+          onMouseEnter={e => { e.currentTarget.style.background = "var(--red-dim)"; }}
+          onMouseLeave={e => { e.currentTarget.style.background = "transparent"; }}
         >
           {removing ? "…" : "✕"}
         </button>
@@ -247,11 +247,11 @@ export default function Portfolio() {
 
   const inputStyle = {
     width: "100%",
-    background: "rgba(255,255,255,0.04)",
-    border: "1.5px solid rgba(255,255,255,0.1)",
+    background: "var(--input-bg)",
+    border: "1.5px solid var(--border-subtle)",
     borderRadius: "12px",
     padding: "12px 14px",
-    color: "#f1f5f9",
+    color: "var(--text-primary)",
     fontSize: "0.9rem",
     fontFamily: "inherit",
     outline: "none",
@@ -282,7 +282,7 @@ export default function Portfolio() {
                   fontSize: "clamp(1.8rem, 4vw, 2.8rem)",
                   fontWeight: 800,
                   letterSpacing: "-0.03em",
-                  background: "linear-gradient(90deg, #00e5ff 0%, #40c4ff 40%, #e040fb 100%)",
+                  background: "linear-gradient(90deg, var(--accent) 0%, var(--purple) 100%)",
                   WebkitBackgroundClip: "text",
                   WebkitTextFillColor: "transparent",
                   backgroundClip: "text",
@@ -291,7 +291,7 @@ export default function Portfolio() {
               >
                 My Portfolio
               </h1>
-              <p style={{ color: "rgba(255,255,255,0.4)", fontSize: "0.9rem" }}>
+              <p style={{ color: "var(--text-secondary)", fontSize: "0.9rem" }}>
                 {holdings.length} holding{holdings.length !== 1 ? "s" : ""} tracked
               </p>
             </div>
@@ -303,14 +303,14 @@ export default function Portfolio() {
               style={{
                 padding: "12px 24px",
                 borderRadius: "12px",
-                border: showForm ? "1px solid rgba(255,23,68,0.3)" : "none",
+                border: showForm ? "1px solid var(--red-dim)" : "none",
                 cursor: "pointer",
                 fontFamily: "inherit",
                 fontWeight: 700,
                 fontSize: "0.9rem",
-                background: showForm ? "rgba(255,23,68,0.08)" : "linear-gradient(135deg, #00e5ff 0%, #0091ea 100%)",
-                color: showForm ? "#ff1744" : "#080c1a",
-                boxShadow: showForm ? "none" : "0 6px 24px rgba(0,229,255,0.3)",
+                background: showForm ? "var(--red-dim)" : "linear-gradient(135deg, var(--accent) 0%, var(--purple) 100%)",
+                color: showForm ? "var(--red)" : "var(--bg-primary)",
+                boxShadow: showForm ? "none" : "0 6px 24px var(--accent-glow)",
                 transition: "all 0.25s",
               }}
             >
@@ -322,8 +322,8 @@ export default function Portfolio() {
           {showForm && (
             <div
               style={{
-                background: "rgba(13,18,36,0.8)",
-                border: "1px solid rgba(0,229,255,0.15)",
+                background: "var(--bg-card)",
+                border: "1px solid var(--accent-glow)",
                 borderRadius: "20px",
                 padding: "28px",
                 marginBottom: "28px",
@@ -331,14 +331,14 @@ export default function Portfolio() {
                 animation: "fadeInUp 0.3s ease forwards",
               }}
             >
-              <p style={{ fontFamily: "'Space Grotesk', sans-serif", fontWeight: 700, fontSize: "1.1rem", color: "#f1f5f9", marginBottom: "20px" }}>
+              <p style={{ fontFamily: "'Space Grotesk', sans-serif", fontWeight: 700, fontSize: "1.1rem", color: "var(--text-primary)", marginBottom: "20px" }}>
                 Add a Stock to Your Portfolio
               </p>
 
               <div style={{ display: "flex", flexWrap: "wrap", gap: "14px", alignItems: "flex-end" }}>
                 {/* Symbol */}
                 <div style={{ position: "relative", flex: "2 1 180px" }}>
-                  <label style={{ display: "block", fontSize: "0.68rem", fontWeight: 700, color: "rgba(255,255,255,0.35)", textTransform: "uppercase", letterSpacing: "0.08em", marginBottom: "8px" }}>
+                  <label style={{ display: "block", fontSize: "0.68rem", fontWeight: 700, color: "var(--text-muted)", textTransform: "uppercase", letterSpacing: "0.08em", marginBottom: "8px" }}>
                     Stock Symbol
                   </label>
                   <input
@@ -347,17 +347,17 @@ export default function Portfolio() {
                     onChange={e => handleSearch(e.target.value)}
                     placeholder="e.g. RELIANCE"
                     style={inputStyle}
-                    onFocus={e => { e.target.style.borderColor = "rgba(0,229,255,0.5)"; }}
-                    onBlur={e => { e.target.style.borderColor = "rgba(255,255,255,0.1)"; }}
+                    onFocus={e => { e.target.style.borderColor = "var(--accent)"; }}
+                    onBlur={e => { e.target.style.borderColor = "var(--border-subtle)"; }}
                   />
                   {searchResults.length > 0 && (
-                    <div style={{ position: "absolute", top: "100%", left: 0, right: 0, background: "rgba(8,12,26,0.98)", border: "1px solid rgba(255,255,255,0.1)", borderRadius: "12px", zIndex: 50, marginTop: "6px", overflow: "hidden", boxShadow: "0 16px 48px rgba(0,0,0,0.6)" }}>
+                    <div style={{ position: "absolute", top: "100%", left: 0, right: 0, background: "var(--bg-primary)", border: "1px solid var(--border-subtle)", borderRadius: "12px", zIndex: 50, marginTop: "6px", overflow: "hidden", boxShadow: "0 16px 48px var(--shadow-card)" }}>
                       {searchResults.map(sym => (
                         <div
                           key={sym}
                           onClick={() => selectStock(sym)}
-                          style={{ padding: "11px 14px", cursor: "pointer", borderBottom: "1px solid rgba(255,255,255,0.04)", fontSize: "0.875rem", transition: "background 0.15s", color: "#00e5ff", fontWeight: 600 }}
-                          onMouseEnter={e => e.currentTarget.style.background = "rgba(0,229,255,0.06)"}
+                          style={{ padding: "11px 14px", cursor: "pointer", borderBottom: "1px solid var(--border-subtle)", fontSize: "0.875rem", transition: "background 0.15s", color: "var(--accent)", fontWeight: 600 }}
+                          onMouseEnter={e => e.currentTarget.style.background = "var(--accent-dim)"}
                           onMouseLeave={e => e.currentTarget.style.background = "transparent"}
                         >
                           {sym}
@@ -369,23 +369,23 @@ export default function Portfolio() {
 
                 {/* Qty */}
                 <div style={{ flex: "1 1 100px" }}>
-                  <label style={{ display: "block", fontSize: "0.68rem", fontWeight: 700, color: "rgba(255,255,255,0.35)", textTransform: "uppercase", letterSpacing: "0.08em", marginBottom: "8px" }}>
+                  <label style={{ display: "block", fontSize: "0.68rem", fontWeight: 700, color: "var(--text-muted)", textTransform: "uppercase", letterSpacing: "0.08em", marginBottom: "8px" }}>
                     Quantity
                   </label>
                   <input type="number" value={quantity} onChange={e => setQuantity(e.target.value)} placeholder="e.g. 10" style={inputStyle}
-                    onFocus={e => { e.target.style.borderColor = "rgba(0,229,255,0.5)"; }}
-                    onBlur={e => { e.target.style.borderColor = "rgba(255,255,255,0.1)"; }}
+                    onFocus={e => { e.target.style.borderColor = "var(--accent)"; }}
+                    onBlur={e => { e.target.style.borderColor = "var(--border-subtle)"; }}
                   />
                 </div>
 
                 {/* Buy price */}
                 <div style={{ flex: "1 1 120px" }}>
-                  <label style={{ display: "block", fontSize: "0.68rem", fontWeight: 700, color: "rgba(255,255,255,0.35)", textTransform: "uppercase", letterSpacing: "0.08em", marginBottom: "8px" }}>
+                  <label style={{ display: "block", fontSize: "0.68rem", fontWeight: 700, color: "var(--text-muted)", textTransform: "uppercase", letterSpacing: "0.08em", marginBottom: "8px" }}>
                     Buy Price (₹)
                   </label>
                   <input type="number" value={buyPrice} onChange={e => setBuyPrice(e.target.value)} placeholder="e.g. 2500" style={inputStyle}
-                    onFocus={e => { e.target.style.borderColor = "rgba(0,229,255,0.5)"; }}
-                    onBlur={e => { e.target.style.borderColor = "rgba(255,255,255,0.1)"; }}
+                    onFocus={e => { e.target.style.borderColor = "var(--accent)"; }}
+                    onBlur={e => { e.target.style.borderColor = "var(--border-subtle)"; }}
                   />
                 </div>
 
@@ -397,13 +397,13 @@ export default function Portfolio() {
                     borderRadius: "12px",
                     border: "none",
                     cursor: adding ? "not-allowed" : "pointer",
-                    background: "linear-gradient(135deg, #00e5ff, #0091ea)",
-                    color: "#080c1a",
+                    background: "linear-gradient(135deg, var(--accent), var(--purple))",
+                    color: "var(--bg-primary)",
                     fontWeight: 800,
                     fontFamily: "inherit",
                     fontSize: "0.9rem",
                     opacity: adding ? 0.7 : 1,
-                    boxShadow: "0 4px 16px rgba(0,229,255,0.25)",
+                    boxShadow: "0 4px 16px var(--accent-glow)",
                     flex: "0 0 auto",
                     alignSelf: "flex-end",
                     minWidth: "110px",
@@ -415,7 +415,7 @@ export default function Portfolio() {
               </div>
 
               {formErr && (
-                <p style={{ color: "#ff1744", fontSize: "0.8rem", fontWeight: 600, marginTop: "12px" }}>⚠️ {formErr}</p>
+                <p style={{ color: "var(--red)", fontSize: "0.8rem", fontWeight: 600, marginTop: "12px" }}>⚠️ {formErr}</p>
               )}
             </div>
           )}
@@ -424,17 +424,17 @@ export default function Portfolio() {
           {holdings.length > 0 && (
             <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(min(160px, 100%), 1fr))", gap: "clamp(10px, 1.5vw, 14px)", marginBottom: "clamp(20px, 3vw, 28px)", animation: "fadeInUp 0.5s 0.1s ease both" }}>
               <MetricCard label="Total Invested"  value={`₹${fmt(totalInvested)}`}  icon="💼" />
-              <MetricCard label="Current Value"   value={`₹${fmt(totalCurrent)}`}   icon="📊" color="#00e5ff" />
+              <MetricCard label="Current Value"   value={`₹${fmt(totalCurrent)}`}   icon="📊" color="var(--accent)" />
               <MetricCard
                 label="Total P&L"
                 value={`${totalPnL >= 0 ? "+" : "−"}₹${fmt(Math.abs(totalPnL))}`}
-                color={isProfitable ? "#00e676" : "#ff1744"}
+                color={isProfitable ? "var(--green)" : "var(--red)"}
                 icon={isProfitable ? "📈" : "📉"}
               />
               <MetricCard
                 label="Overall Return"
                 value={`${totalPnLPct >= 0 ? "+" : ""}${totalPnLPct.toFixed(2)}%`}
-                color={isProfitable ? "#00e676" : "#ff1744"}
+                color={isProfitable ? "var(--green)" : "var(--red)"}
                 icon="🎯"
               />
             </div>
@@ -442,22 +442,22 @@ export default function Portfolio() {
 
           {/* Allocation insight */}
           {holdings.length > 1 && (
-            <div style={{ background: "rgba(13,18,36,0.6)", border: "1px solid rgba(255,255,255,0.07)", borderRadius: "18px", padding: "20px 24px", marginBottom: "24px", display: "flex", gap: "20px", alignItems: "center", flexWrap: "wrap", animation: "fadeInUp 0.5s 0.15s ease both" }}>
+            <div style={{ background: "var(--bg-card)", border: "1px solid var(--border-subtle)", borderRadius: "18px", padding: "20px 24px", marginBottom: "24px", display: "flex", gap: "20px", alignItems: "center", flexWrap: "wrap", animation: "fadeInUp 0.5s 0.15s ease both" }}>
               <AllocationDonut holdings={holdings} size={80} />
               <div style={{ flex: 1 }}>
-                <p style={{ fontSize: "0.72rem", fontWeight: 700, color: "rgba(255,255,255,0.35)", textTransform: "uppercase", letterSpacing: "0.08em", marginBottom: "10px" }}>Allocation</p>
+                <p style={{ fontSize: "0.72rem", fontWeight: 700, color: "var(--text-muted)", textTransform: "uppercase", letterSpacing: "0.08em", marginBottom: "10px" }}>Allocation</p>
                 <div style={{ display: "flex", flexWrap: "wrap", gap: "8px" }}>
                   {holdings.slice(0, 6).map((h, i) => {
-                    const colors = ["#00e5ff", "#00e676", "#e040fb", "#ffd740", "#ff9100", "#2979ff"];
+                    const colors = ["var(--accent)", "var(--green)", "var(--purple)", "var(--gold)", "var(--orange)", "var(--blue)"];
                     const pct = ((h.invested / totalInvested) * 100).toFixed(1);
                     return (
-                      <span key={h.id} style={{ display: "inline-flex", alignItems: "center", gap: "6px", padding: "4px 10px", borderRadius: "20px", background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.08)", fontSize: "0.75rem", fontWeight: 600, color: "rgba(255,255,255,0.65)" }}>
+                      <span key={h.id} style={{ display: "inline-flex", alignItems: "center", gap: "6px", padding: "4px 10px", borderRadius: "20px", background: "var(--bg-primary)", border: "1px solid var(--border-subtle)", fontSize: "0.75rem", fontWeight: 600, color: "var(--text-secondary)" }}>
                         <span style={{ width: "6px", height: "6px", borderRadius: "50%", background: colors[i % colors.length], flexShrink: 0 }} />
                         {h.symbol} · {pct}%
                       </span>
                     );
                   })}
-                  {holdings.length > 6 && <span style={{ fontSize: "0.75rem", color: "rgba(255,255,255,0.3)", padding: "4px 10px" }}>+{holdings.length - 6} more</span>}
+                  {holdings.length > 6 && <span style={{ fontSize: "0.75rem", color: "var(--text-muted)", padding: "4px 10px" }}>+{holdings.length - 6} more</span>}
                 </div>
               </div>
             </div>
@@ -465,32 +465,32 @@ export default function Portfolio() {
 
           {/* Holdings table / empty state */}
           {loading ? (
-            <div style={{ background: "rgba(13,18,36,0.7)", border: "1px solid rgba(255,255,255,0.07)", borderRadius: "20px", padding: "64px 24px", textAlign: "center" }}>
+            <div style={{ background: "var(--bg-card)", border: "1px solid var(--border-subtle)", borderRadius: "20px", padding: "64px 24px", textAlign: "center" }}>
               <div className="spinner" style={{ margin: "0 auto 16px" }} />
-              <p style={{ color: "rgba(255,255,255,0.5)" }}>Loading your portfolio…</p>
+              <p style={{ color: "var(--text-secondary)" }}>Loading your portfolio…</p>
             </div>
           ) : holdings.length === 0 ? (
-            <div style={{ background: "rgba(13,18,36,0.7)", border: "1px solid rgba(255,255,255,0.07)", borderRadius: "20px", padding: "80px 24px", textAlign: "center", animation: "fadeInUp 0.5s ease forwards" }}>
+            <div style={{ background: "var(--bg-card)", border: "1px solid var(--border-subtle)", borderRadius: "20px", padding: "80px 24px", textAlign: "center", animation: "fadeInUp 0.5s ease forwards" }}>
               <p style={{ fontSize: "3.5rem", marginBottom: "16px" }}>📂</p>
-              <p style={{ fontSize: "1.2rem", fontWeight: 700, color: "#f1f5f9", marginBottom: "8px" }}>Portfolio is empty</p>
-              <p style={{ color: "rgba(255,255,255,0.4)", fontSize: "0.9rem", marginBottom: "24px" }}>
-                Click <strong style={{ color: "#00e5ff" }}>+ Add Stock</strong> to start tracking your investments.
+              <p style={{ fontSize: "1.2rem", fontWeight: 700, color: "var(--text-primary)", marginBottom: "8px" }}>Portfolio is empty</p>
+              <p style={{ color: "var(--text-secondary)", fontSize: "0.9rem", marginBottom: "24px" }}>
+                Click <strong style={{ color: "var(--accent)" }}>+ Add Stock</strong> to start tracking your investments.
               </p>
               <button
                 onClick={() => setShowForm(true)}
-                style={{ padding: "12px 28px", borderRadius: "12px", border: "none", cursor: "pointer", fontFamily: "inherit", fontWeight: 700, fontSize: "0.9rem", background: "linear-gradient(135deg, #00e5ff, #0091ea)", color: "#080c1a", boxShadow: "0 6px 24px rgba(0,229,255,0.3)" }}
+                style={{ padding: "12px 28px", borderRadius: "12px", border: "none", cursor: "pointer", fontFamily: "inherit", fontWeight: 700, fontSize: "0.9rem", background: "linear-gradient(135deg, var(--accent), var(--purple))", color: "var(--bg-primary)", boxShadow: "0 6px 24px var(--accent-glow)" }}
               >
                 + Add Your First Stock
               </button>
             </div>
           ) : (
-            <div style={{ background: "rgba(13,18,36,0.7)", border: "1px solid rgba(255,255,255,0.07)", borderRadius: "20px", overflow: "hidden", backdropFilter: "blur(12px)", animation: "fadeInUp 0.5s 0.2s ease both" }}>
+            <div style={{ background: "var(--bg-card)", border: "1px solid var(--border-subtle)", borderRadius: "20px", overflow: "hidden", backdropFilter: "blur(12px)", animation: "fadeInUp 0.5s 0.2s ease both" }}>
               <div style={{ overflowX: "auto" }}>
                 <table className="table-premium" style={{ minWidth: "600px" }}>
-                  <thead style={{ background: "rgba(0,0,0,0.2)" }}>
+                  <thead style={{ background: "var(--input-bg)" }}>
                     <tr>
                       {["Stock", "Qty", "Buy ₹", "Current ₹", "Invested", "Value", "P&L", "P&L %", ""].map(h => (
-                        <th key={h} style={{ padding: "14px 18px", textAlign: h === "Stock" || h === "" ? "left" : "right", fontSize: "0.65rem", fontWeight: 800, color: "rgba(255,255,255,0.35)", textTransform: "uppercase", letterSpacing: "0.08em" }}>{h}</th>
+                        <th key={h} style={{ padding: "14px 18px", textAlign: h === "Stock" || h === "" ? "left" : "right", fontSize: "0.65rem", fontWeight: 800, color: "var(--text-muted)", textTransform: "uppercase", letterSpacing: "0.08em" }}>{h}</th>
                       ))}
                     </tr>
                   </thead>
@@ -503,15 +503,15 @@ export default function Portfolio() {
               </div>
 
               {/* Table footer */}
-              <div style={{ padding: "clamp(10px, 2vw, 14px) clamp(12px, 2vw, 18px)", borderTop: "1px solid rgba(255,255,255,0.05)", display: "flex", justifyContent: "flex-end", gap: "clamp(12px, 2vw, 24px)", background: "rgba(0,0,0,0.1)", flexWrap: "wrap" }}>
-                <span style={{ fontSize: "0.8rem", color: "rgba(255,255,255,0.4)" }}>
-                  Total Invested: <strong style={{ color: "#f1f5f9" }}>₹{fmt(totalInvested)}</strong>
+              <div style={{ padding: "clamp(10px, 2vw, 14px) clamp(12px, 2vw, 18px)", borderTop: "1px solid var(--border-subtle)", display: "flex", justifyContent: "flex-end", gap: "clamp(12px, 2vw, 24px)", background: "var(--input-bg)", flexWrap: "wrap" }}>
+                <span style={{ fontSize: "0.8rem", color: "var(--text-secondary)" }}>
+                  Total Invested: <strong style={{ color: "var(--text-primary)" }}>₹{fmt(totalInvested)}</strong>
                 </span>
-                <span style={{ fontSize: "0.8rem", color: "rgba(255,255,255,0.4)" }}>
-                  Current Value: <strong style={{ color: "#00e5ff" }}>₹{fmt(totalCurrent)}</strong>
+                <span style={{ fontSize: "0.8rem", color: "var(--text-secondary)" }}>
+                  Current Value: <strong style={{ color: "var(--accent)" }}>₹{fmt(totalCurrent)}</strong>
                 </span>
-                <span style={{ fontSize: "0.8rem", color: "rgba(255,255,255,0.4)" }}>
-                  Net P&L: <strong style={{ color: isProfitable ? "#00e676" : "#ff1744" }}>{isProfitable ? "+" : "−"}₹{fmt(Math.abs(totalPnL))}</strong>
+                <span style={{ fontSize: "0.8rem", color: "var(--text-secondary)" }}>
+                  Net P&L: <strong style={{ color: isProfitable ? "var(--green)" : "var(--red)" }}>{isProfitable ? "+" : "−"}₹{fmt(Math.abs(totalPnL))}</strong>
                 </span>
               </div>
             </div>

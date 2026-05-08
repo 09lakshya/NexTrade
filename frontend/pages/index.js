@@ -29,14 +29,14 @@ function MarketStatusBadge({ connected }) {
   const label = !connected ? "Connecting…" : open ? "Live" : "Market Closed";
   const color = !connected ? "var(--gold)" : open ? "var(--green)" : "var(--text-muted)";
   const bg = !connected
-    ? "rgba(255,193,7,0.1)"
+    ? "var(--bg-card)"
     : open
     ? "var(--green-dim)"
     : "var(--bg-card)";
   const borderColor = !connected
-    ? "rgba(255,193,7,0.25)"
+    ? "var(--border-medium)"
     : open
-    ? "rgba(0,230,118,0.25)"
+    ? "var(--green-dim)"
     : "var(--border-subtle)";
 
   return (
@@ -139,7 +139,7 @@ function IndexCard({ symbol, data, prevData }) {
         background: "var(--bg-card)",
         backdropFilter: "blur(24px) saturate(200%)",
         WebkitBackdropFilter: "blur(24px) saturate(200%)",
-        border: `1px solid ${flash === "up" ? "rgba(0,230,118,0.3)" : flash === "down" ? "rgba(255,23,68,0.3)" : "var(--border-subtle)"}`,
+        border: `1px solid ${flash === "up" ? "var(--green-dim)" : flash === "down" ? "var(--red-dim)" : "var(--border-subtle)"}`,
         borderRadius: "clamp(14px, 2vw, 20px)",
         padding: "clamp(16px, 3vw, 24px) clamp(18px, 3vw, 28px)",
         flex: "1 1 200px",
@@ -147,9 +147,9 @@ function IndexCard({ symbol, data, prevData }) {
         position: "relative",
         overflow: "hidden",
         boxShadow: flash === "up"
-          ? "0 0 24px rgba(0,230,118,0.15), var(--shadow-card)"
+          ? "0 0 24px var(--green-dim), var(--shadow-card)"
           : flash === "down"
-          ? "0 0 24px rgba(255,23,68,0.15), var(--shadow-card)"
+          ? "0 0 24px var(--red-dim), var(--shadow-card)"
           : "var(--shadow-card)",
         animation: flash === "up"
           ? "flashPriceUp 0.8s ease forwards"
@@ -167,7 +167,7 @@ function IndexCard({ symbol, data, prevData }) {
           left: 0,
           right: 0,
           bottom: 0,
-          background: "linear-gradient(135deg, rgba(255,255,255,0.04) 0%, transparent 60%)",
+          background: "linear-gradient(135deg, var(--skeleton-from) 0%, transparent 60%)",
           pointerEvents: "none",
         }}
       />
@@ -270,20 +270,32 @@ export default function Home() {
 
   useEffect(() => {
     let ws;
+    let retryTimer;
+    let active = true;
     const connect = () => {
+      if (!active) return;
       ws = new WebSocket(process.env.NEXT_PUBLIC_WS_URL || "ws://localhost:8000/market/ws");
-      ws.onopen = () => setConnected(true);
+      ws.onopen = () => { if (active) setConnected(true); };
       ws.onmessage = (e) => {
+        if (!active) return;
         try {
           const data = JSON.parse(e.data);
           setStocks((prev) => { setPrevStocks(prev); return data; });
         } catch {}
       };
-      ws.onclose = () => { setConnected(false); setTimeout(connect, 2000); };
+      ws.onclose = () => {
+        if (!active) return;
+        setConnected(false);
+        retryTimer = setTimeout(connect, 5000);
+      };
       ws.onerror = () => ws.close();
     };
     connect();
-    return () => { if (ws) ws.close(); };
+    return () => {
+      active = false;
+      clearTimeout(retryTimer);
+      if (ws) ws.close();
+    };
   }, []);
 
   const entries = Object.entries(stocks || {});
@@ -350,7 +362,7 @@ export default function Home() {
                   fontWeight: 800,
                   letterSpacing: "-0.03em",
                   lineHeight: 1.1,
-                  background: "linear-gradient(90deg, #00e5ff 0%, #40c4ff 40%, #e040fb 100%)",
+                  background: "linear-gradient(90deg, var(--accent) 0%, var(--purple) 100%)",
                   WebkitBackgroundClip: "text",
                   WebkitTextFillColor: "transparent",
                   backgroundClip: "text",
@@ -411,7 +423,7 @@ export default function Home() {
                 padding: "16px 20px",
                 marginBottom: "32px",
                 boxShadow: gainersCount > losersCount
-                  ? "0 0 32px rgba(0,230,118,0.06), var(--shadow-card)"
+                  ? "0 0 32px var(--green-dim), var(--shadow-card)"
                   : "var(--shadow-card)",
                 animation: "fadeInUp 0.5s 0.15s ease both",
               }}
@@ -428,19 +440,19 @@ export default function Home() {
                 <div
                   style={{
                     flex: gainersCount,
-                    background: "linear-gradient(90deg, #00e676, #69f0ae)",
+                    background: "linear-gradient(90deg, var(--green), var(--green-dim))",
                     borderRadius: "8px 0 0 8px",
                     transition: "flex 0.5s ease",
-                    boxShadow: gainersCount > losersCount ? "0 0 12px rgba(0,230,118,0.4)" : "none",
+                    boxShadow: gainersCount > losersCount ? "0 0 12px var(--green-dim)" : "none",
                   }}
                 />
                 <div
                   style={{
                     flex: losersCount,
-                    background: "linear-gradient(90deg, #ff5252, #ff1744)",
+                    background: "linear-gradient(90deg, var(--red-dim), var(--red))",
                     borderRadius: "0 8px 8px 0",
                     transition: "flex 0.5s ease",
-                    boxShadow: losersCount > gainersCount ? "0 0 12px rgba(255,23,68,0.4)" : "none",
+                    boxShadow: losersCount > gainersCount ? "0 0 12px var(--red-dim)" : "none",
                   }}
                 />
               </div>
@@ -495,15 +507,15 @@ export default function Home() {
                     transition: "all 0.2s",
                     background: filterCategory === cat
                       ? cat === "Gainers"
-                        ? "linear-gradient(135deg, rgba(0,230,118,0.2), rgba(0,230,118,0.08))"
+                        ? "var(--green-dim)"
                         : cat === "Losers"
-                        ? "linear-gradient(135deg, rgba(255,23,68,0.2), rgba(255,23,68,0.08))"
-                        : "linear-gradient(135deg, var(--accent-dim), rgba(0,145,234,0.05))"
+                        ? "var(--red-dim)"
+                        : "var(--accent-dim)"
                       : "transparent",
                     color: filterCategory === cat
                       ? cat === "Gainers" ? "var(--green)" : cat === "Losers" ? "var(--red)" : "var(--accent)"
                       : "var(--filter-tab-inactive)",
-                    boxShadow: filterCategory === cat ? "0 2px 8px rgba(0,0,0,0.15)" : "none",
+                    boxShadow: filterCategory === cat ? "0 2px 8px var(--shadow-card)" : "none",
                   }}
                 >
                   {cat}

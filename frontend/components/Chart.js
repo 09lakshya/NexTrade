@@ -58,10 +58,10 @@ export default function Chart({ data }) {
       tooltip: {
         enabled: true,
         mode: "index",
-        backgroundColor: "rgba(10, 14, 39, 0.95)",
-        borderColor: "#22c55e",
+        backgroundColor: "var(--bg-card)",
+        borderColor: "var(--green)",
         borderWidth: 2,
-        bodyColor: "#ffffff",
+        bodyColor: "var(--text-primary)",
         padding: 12,
         borderRadius: 8,
         callback: {
@@ -77,10 +77,10 @@ export default function Chart({ data }) {
     scales: {
       y: {
         grid: {
-          color: "rgba(255, 255, 255, 0.05)",
+          color: "var(--border-subtle)",
         },
         ticks: {
-          color: "rgba(255, 255, 255, 0.7)",
+          color: "var(--text-secondary)",
           callback: function (value) {
             return "₹" + value.toFixed(0);
           },
@@ -88,10 +88,10 @@ export default function Chart({ data }) {
       },
       x: {
         grid: {
-          color: "rgba(255, 255, 255, 0.05)",
+          color: "var(--border-subtle)",
         },
         ticks: {
-          color: "rgba(255, 255, 255, 0.7)",
+          color: "var(--text-secondary)",
         },
       },
     },
@@ -103,14 +103,14 @@ export default function Chart({ data }) {
       {
         label: "Stock Price",
         data: prices,
-        borderColor: "#22c55e",
+        borderColor: "var(--green)",
         borderWidth: 2,
         tension: 0.3,
         fill: false,
         pointRadius: 0,
         pointHoverRadius: 8,
-        pointBackgroundColor: "#22c55e",
-        pointBorderColor: "#ffffff",
+        pointBackgroundColor: "var(--green)",
+        pointBorderColor: "var(--bg-primary)",
         pointBorderWidth: 2,
       },
     ],
@@ -120,8 +120,8 @@ export default function Chart({ data }) {
     <div className="relative w-full h-full">
       <Line data={chartData} options={chartOptions} />
       {hoveredTimestamp && (
-        <div className="absolute top-0 left-0 right-0 bg-green-500 bg-opacity-20 border-b border-green-500 border-opacity-50 px-4 py-2 z-10">
-          <p className="text-sm font-semibold text-green-400">
+        <div className="absolute top-0 left-0 right-0 px-4 py-2 z-10" style={{ background: "var(--green-dim)", borderBottom: "1px solid var(--green)" }}>
+          <p className="text-sm font-semibold" style={{ color: "var(--green)" }}>
             {hoveredTimestamp}
           </p>
         </div>
@@ -132,14 +132,15 @@ export default function Chart({ data }) {
   if (isExpanded) {
     return (
       <div className="fixed inset-0 z-[9999] bg-black bg-opacity-90 flex items-center justify-center p-4">
-        <div className="w-full h-full max-w-7xl max-h-[90vh] bg-gradient-to-br from-primary via-secondary to-primary rounded-2xl p-6 flex flex-col border border-green-500 border-opacity-20">
+        <div className="w-full h-full max-w-7xl max-h-[90vh] rounded-2xl p-6 flex flex-col border" style={{ background: "var(--bg-primary)", borderColor: "var(--border-medium)" }}>
           <div className="flex justify-between items-center mb-4">
-            <h3 className="text-2xl font-bold text-white">
+            <h3 className="text-2xl font-bold" style={{ color: "var(--text-primary)" }}>
               Chart - Expanded View
             </h3>
             <button
               onClick={() => setIsExpanded(false)}
-              className="px-6 py-2 bg-green-500 bg-opacity-20 border border-green-500 text-green-400 rounded-lg hover:bg-opacity-30 font-semibold transition-all duration-200"
+              className="px-6 py-2 rounded-lg font-semibold transition-all duration-200"
+              style={{ background: "var(--green-dim)", color: "var(--green)", border: "1px solid var(--green)" }}
             >
               Close
             </button>
@@ -156,7 +157,8 @@ export default function Chart({ data }) {
     <div className="w-full h-full flex flex-col">
       <button
         onClick={() => setIsExpanded(true)}
-        className="mb-2 self-end px-4 py-1 text-sm bg-green-500 bg-opacity-10 border border-green-500 border-opacity-30 text-green-400 rounded hover:bg-opacity-20 transition-all duration-200"
+        className="mb-2 self-end px-4 py-1 text-sm rounded transition-all duration-200"
+        style={{ background: "var(--green-dim)", color: "var(--green)", border: "1px solid var(--green)" }}
       >
         Expand
       </button>

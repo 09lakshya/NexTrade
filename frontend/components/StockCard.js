@@ -16,7 +16,7 @@ function Sparkline({ data, positive, width = 80, height = 32 }) {
   });
   const pathD = `M ${pts.join(" L ")}`;
   const fillPts = `M 0,${height} L ${pts.join(" L ")} L ${width},${height} Z`;
-  const color = positive ? "#00e676" : "#ff1744";
+  const color = positive ? "var(--green)" : "var(--red)";
   const fadeId = `fade-${Math.random().toString(36).substr(2, 6)}`;
 
   return (
@@ -68,9 +68,9 @@ export default function StockCard({ symbol, price, change, percent, color, small
 
   const flashBg =
     flash === "up"
-      ? "rgba(0, 230, 118, 0.08)"
+      ? "var(--green-dim)"
       : flash === "down"
-      ? "rgba(255, 23, 68, 0.08)"
+      ? "var(--red-dim)"
       : "transparent";
 
   return (
@@ -86,13 +86,13 @@ export default function StockCard({ symbol, price, change, percent, color, small
           : hovered
           ? "var(--bg-card)"
           : "var(--bg-card)",
-        border: `1px solid ${hovered ? "rgba(0,229,255,0.25)" : "var(--border-subtle)"}`,
+        border: `1px solid ${hovered ? "var(--accent-glow)" : "var(--border-subtle)"}`,
         borderRadius: "clamp(12px, 2vw, 16px)",
         padding: small ? "clamp(12px, 2vw, 16px)" : "clamp(14px, 2.5vw, 20px)",
         cursor: "pointer",
         transition: "all 0.25s ease",
         transform: hovered ? "translateY(-3px)" : "translateY(0)",
-        boxShadow: hovered ? "var(--shadow-card), 0 0 0 1px rgba(0,229,255,0.1)" : "var(--shadow-card)",
+        boxShadow: hovered ? "var(--shadow-card), 0 0 0 1px var(--accent-dim)" : "var(--shadow-card)",
         backdropFilter: "blur(16px)",
         WebkitBackdropFilter: "blur(16px)",
         position: "relative",
@@ -144,7 +144,7 @@ export default function StockCard({ symbol, price, change, percent, color, small
                 fontWeight: 700,
                 background: isPositive ? "var(--green-dim)" : "var(--red-dim)",
                 color: isPositive ? "var(--green)" : "var(--red)",
-                border: `1px solid ${isPositive ? "rgba(0,230,118,0.2)" : "rgba(255,23,68,0.2)"}`,
+                border: `1px solid ${isPositive ? "var(--green-dim)" : "var(--red-dim)"}`,
                 letterSpacing: "0.03em",
               }}
             >
@@ -159,9 +159,9 @@ export default function StockCard({ symbol, price, change, percent, color, small
                 borderRadius: "20px",
                 fontSize: "0.62rem",
                 fontWeight: 700,
-                background: "rgba(255,23,68,0.1)",
+                background: "var(--red-dim)",
                 color: "var(--red)",
-                border: "1px solid rgba(255,23,68,0.25)",
+                border: "1px solid var(--red-dim)",
                 letterSpacing: "0.03em",
                 textTransform: "uppercase",
               }}

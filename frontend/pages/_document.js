@@ -28,6 +28,7 @@ export default function Document() {
         {/* ── Meta ── */}
         <meta name="theme-color" content="#080c1a" />
         <meta name="apple-mobile-web-app-capable" content="yes" />
+        <meta name="mobile-web-app-capable" content="yes" />
         <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
         <meta name="apple-mobile-web-app-title" content="NexTrade" />
         <meta name="application-name" content="NexTrade" />

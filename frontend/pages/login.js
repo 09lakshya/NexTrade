@@ -86,7 +86,35 @@ export default function LoginPage() {
     } catch (err) {
       const msg =
         err?.response?.data?.detail || "Something went wrong. Please try again.";
-      setError(msg);
+      
+      if (mode === "signup" && msg.toLowerCase().includes("already exists")) {
+        setError(
+          <span style={{ display: "inline-flex", alignItems: "center", gap: "6px" }}>
+            This email is already registered.{" "}
+            <button
+              type="button"
+              onClick={() => {
+                setError("");
+                setMode("login");
+              }}
+              style={{
+                background: "none",
+                border: "none",
+                color: "var(--accent)",
+                fontWeight: 700,
+                cursor: "pointer",
+                padding: 0,
+                textDecoration: "underline",
+                fontSize: "inherit"
+              }}
+            >
+              Sign In Instead
+            </button>
+          </span>
+        );
+      } else {
+        setError(msg);
+      }
     } finally {
       setSubmitting(false);
     }
@@ -100,7 +128,7 @@ export default function LoginPage() {
           display: "flex",
           alignItems: "center",
           justifyContent: "center",
-          background: "var(--bg-primary, #060a14)",
+          background: "var(--bg-primary)",
         }}
       >
         <div className="spinner" />
@@ -146,39 +174,13 @@ export default function LoginPage() {
           display: "flex",
           alignItems: "center",
           justifyContent: "center",
-          background: "var(--bg-primary, #060a14)",
+          background: "var(--bg-primary)",
           padding: "24px",
           position: "relative",
           overflow: "hidden",
         }}
       >
-        {/* Background effects */}
-        <div
-          style={{
-            position: "absolute",
-            top: "-30%",
-            left: "-10%",
-            width: "600px",
-            height: "600px",
-            borderRadius: "50%",
-            background: "radial-gradient(circle, rgba(0,229,255,0.06) 0%, transparent 70%)",
-            filter: "blur(80px)",
-            pointerEvents: "none",
-          }}
-        />
-        <div
-          style={{
-            position: "absolute",
-            bottom: "-20%",
-            right: "-10%",
-            width: "500px",
-            height: "500px",
-            borderRadius: "50%",
-            background: "radial-gradient(circle, rgba(224,64,251,0.05) 0%, transparent 70%)",
-            filter: "blur(80px)",
-            pointerEvents: "none",
-          }}
-        />
+
 
         <div
           style={{
@@ -207,7 +209,7 @@ export default function LoginPage() {
                 style={{
                   width: "44px",
                   height: "44px",
-                  filter: "drop-shadow(0 4px 16px rgba(0,229,255,0.3))",
+                  filter: "drop-shadow(0 4px 16px var(--accent-glow))",
                   objectFit: "contain",
                   borderRadius: "8px",
                 }}
@@ -217,7 +219,7 @@ export default function LoginPage() {
                   fontFamily: "'Space Grotesk', sans-serif",
                   fontWeight: 800,
                   fontSize: "1.6rem",
-                  background: "linear-gradient(90deg, #00e5ff, #40c4ff)",
+                  background: "linear-gradient(90deg, var(--accent), var(--purple))",
                   WebkitBackgroundClip: "text",
                   WebkitTextFillColor: "transparent",
                   backgroundClip: "text",
@@ -262,7 +264,7 @@ export default function LoginPage() {
                 left: 0,
                 right: 0,
                 height: "2px",
-                background: "linear-gradient(90deg, #00e5ff, #e040fb, transparent)",
+                background: "linear-gradient(90deg, var(--accent), var(--purple), transparent)",
               }}
             />
 
@@ -505,7 +507,7 @@ export default function LoginPage() {
                       height="11"
                       viewBox="0 0 24 24"
                       fill="none"
-                      stroke="#00e5ff"
+                      stroke="var(--accent)"
                       strokeWidth="3.5"
                       strokeLinecap="round"
                       strokeLinejoin="round"
@@ -531,8 +533,8 @@ export default function LoginPage() {
               {error && (
                 <div
                   style={{
-                    background: "rgba(255,23,68,0.08)",
-                    border: "1px solid rgba(255,23,68,0.2)",
+                    background: "var(--red-dim)",
+                    border: "1px solid var(--red-dim)",
                     borderRadius: "12px",
                     padding: "12px 16px",
                     marginBottom: "20px",
@@ -544,7 +546,7 @@ export default function LoginPage() {
                   <span style={{ fontSize: "1rem" }}>⚠️</span>
                   <span
                     style={{
-                      color: "#ff5252",
+                      color: "var(--red)",
                       fontSize: "0.85rem",
                       fontWeight: 600,
                     }}
@@ -569,12 +571,12 @@ export default function LoginPage() {
                   fontSize: "1rem",
                   letterSpacing: "0.02em",
                   background: submitting
-                    ? "rgba(0,229,255,0.3)"
-                    : "linear-gradient(135deg, #00e5ff 0%, #0091ea 100%)",
-                  color: "#080c1a",
+                    ? "var(--accent-dim)"
+                    : "linear-gradient(135deg, var(--accent) 0%, var(--purple) 100%)",
+                  color: "var(--bg-primary)",
                   boxShadow: submitting
                     ? "none"
-                    : "0 8px 32px rgba(0,229,255,0.3)",
+                    : "0 8px 32px var(--accent-glow)",
                   transition: "all 0.3s",
                   position: "relative",
                   overflow: "hidden",
@@ -617,7 +619,7 @@ export default function LoginPage() {
                   setError("");
                 }}
                 style={{
-                  color: "#00e5ff",
+                  color: "var(--accent)",
                   fontWeight: 700,
                   cursor: "pointer",
                   transition: "opacity 0.2s",

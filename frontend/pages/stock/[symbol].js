@@ -157,7 +157,7 @@ export default function StockPage() {
                   fontSize: "clamp(2rem, 5vw, 3.5rem)",
                   fontWeight: 900,
                   letterSpacing: "-0.04em",
-                  background: "linear-gradient(90deg, #00e5ff 0%, #40c4ff 50%, #e040fb 100%)",
+                  background: "linear-gradient(90deg, var(--accent) 0%, var(--purple) 100%)",
                   WebkitBackgroundClip: "text",
                   WebkitTextFillColor: "transparent",
                   backgroundClip: "text",
@@ -197,7 +197,7 @@ export default function StockPage() {
                     color: neutral ? "var(--accent)" : bull ? "var(--green)" : "var(--red)",
                     fontSize: "0.7rem",
                     fontWeight: 800,
-                    border: `1px solid ${neutral ? "var(--accent-glow)" : bull ? "rgba(0,230,118,0.25)" : "rgba(220,38,38,0.25)"}`,
+                    border: `1px solid ${neutral ? "var(--accent-glow)" : bull ? "var(--green-dim)" : "var(--red-dim)"}`,
                   }}>
                     {neutral ? "NEUTRAL" : bull ? "BULLISH" : "BEARISH"}
                   </span>
@@ -236,7 +236,7 @@ export default function StockPage() {
                   transition: "all 0.2s",
                   background: period === key ? "var(--accent-dim)" : "transparent",
                   color: period === key ? "var(--accent)" : "var(--filter-tab-inactive)",
-                  boxShadow: period === key ? "0 2px 8px rgba(0,0,0,0.15)" : "none",
+                  boxShadow: period === key ? "0 2px 8px var(--shadow-card)" : "none",
                 }}
               >
                 {label}
@@ -319,7 +319,7 @@ export default function StockPage() {
                     fontFamily: "'Space Grotesk', sans-serif",
                     fontSize: "1.3rem",
                     fontWeight: 800,
-                    background: "linear-gradient(90deg, #00e5ff, #40c4ff)",
+                    background: "linear-gradient(90deg, var(--accent), var(--purple))",
                     WebkitBackgroundClip: "text",
                     WebkitTextFillColor: "transparent",
                     backgroundClip: "text",
@@ -407,11 +407,13 @@ export default function StockPage() {
                       letterSpacing: "0.05em",
                       background: pred.news_impact === "bullish" ? "var(--green-dim)" : pred.news_impact === "bearish" ? "var(--red-dim)" : "var(--accent-dim)",
                       color: pred.news_impact === "bullish" ? "var(--green)" : pred.news_impact === "bearish" ? "var(--red)" : "var(--accent)",
-                      border: `1px solid ${pred.news_impact === "bullish" ? "rgba(0,230,118,0.25)" : pred.news_impact === "bearish" ? "rgba(220,38,38,0.25)" : "var(--accent-glow)"}`,
+                      border: `1px solid ${pred.news_impact === "bullish" ? "var(--green-dim)" : pred.news_impact === "bearish" ? "var(--red-dim)" : "var(--accent-glow)"}`,
                     }}>
                       {pred.news_impact}
                     </span>
-                    <span style={{ fontSize: "0.78rem", color: "var(--text-muted)" }}>{pred.news_count} articles analyzed</span>
+                    <span style={{ fontSize: "0.78rem", color: "var(--text-muted)" }}>
+                      {pred.sentiment_source === "news" ? `${pred.news_count} articles analyzed` : "Market momentum proxy"}
+                    </span>
                   </div>
 
                   <div style={{ marginTop: "16px", padding: "12px", background: "var(--accent-dim)", border: "1px solid var(--accent-glow)", borderRadius: "10px" }}>
@@ -449,9 +451,9 @@ export default function StockPage() {
 
                   <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(min(90px, 100%), 1fr))", gap: "10px", marginBottom: "16px" }}>
                     {[
-                      { label: "PE Ratio", value: pred.pe_ratio ? pred.pe_ratio.toFixed(2) : "N/A", color: "var(--text-primary)" },
-                      { label: "Earnings Growth", value: pred.earnings_growth ? (pred.earnings_growth * 100).toFixed(1) + "%" : "N/A", color: pred.earnings_growth > 0 ? "var(--green)" : "var(--red)" },
-                      { label: "Revenue Growth", value: pred.revenue_growth ? (pred.revenue_growth * 100).toFixed(1) + "%" : "N/A", color: pred.revenue_growth > 0 ? "var(--green)" : "var(--red)" },
+                      { label: "PE Ratio", value: pred.pe_ratio != null ? pred.pe_ratio.toFixed(2) : "N/A", color: "var(--text-primary)" },
+                      { label: "Earnings Growth", value: pred.earnings_growth != null ? (pred.earnings_growth * 100).toFixed(1) + "%" : "N/A", color: pred.earnings_growth > 0 ? "var(--green)" : "var(--red)" },
+                      { label: "Revenue Growth", value: pred.revenue_growth != null ? (pred.revenue_growth * 100).toFixed(1) + "%" : "N/A", color: pred.revenue_growth > 0 ? "var(--green)" : "var(--red)" },
                     ].map(({ label, value, color }) => (
                       <div key={label} style={{ background: "var(--input-bg)", border: "1px solid var(--border-subtle)", borderRadius: "10px", padding: "12px" }}>
                         <p style={{ fontSize: "0.65rem", color: "var(--text-muted)", fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.06em", marginBottom: "6px" }}>{label}</p>
@@ -479,7 +481,7 @@ export default function StockPage() {
                   fontFamily: "'Space Grotesk', sans-serif",
                   fontSize: "1.4rem",
                   fontWeight: 800,
-                  background: "linear-gradient(90deg, #00e5ff, #40c4ff)",
+                  background: "linear-gradient(90deg, var(--accent), var(--purple))",
                   WebkitBackgroundClip: "text",
                   WebkitTextFillColor: "transparent",
                   backgroundClip: "text",

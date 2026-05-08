@@ -1,5 +1,6 @@
 from fastapi import APIRouter
 from pydantic import BaseModel
+from typing import Optional
 from services.advisor_service import get_recommendations
 from services.calculator_service import calculate_investment, calculate_portfolio_metrics, estimate_returns
 
@@ -11,6 +12,8 @@ class AdvisorInput(BaseModel):
     duration: str    # short | medium | long
     risk:     str    # low | medium | high
     budget:   float
+    investmentType: str = "one-time"  # one-time | monthly
+    investmentMonths: Optional[int] = None
 
 
 class CalculatorInput(BaseModel):
@@ -27,6 +30,8 @@ def recommend(payload: AdvisorInput):
         duration=payload.duration,
         risk=payload.risk,
         budget=payload.budget,
+        investment_type=payload.investmentType,
+        investment_months=payload.investmentMonths,
     )
 
 

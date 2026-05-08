@@ -5,12 +5,20 @@ import API from "../services/api";
 import { useAuth } from "../context/AuthContext";
 import { useTheme } from "../context/ThemeContext";
 
+// Gear icon SVG for Settings
+const GearIcon = ({ size = 18, color = "currentColor" }) => (
+  <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <circle cx="12" cy="12" r="3" />
+    <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z" />
+  </svg>
+);
+
 const NAV_LINKS = [
   { href: "/", label: "Dashboard", icon: "D" },
   { href: "/advisor", label: "AI Advisor", icon: "A" },
   { href: "/calculator", label: "Calculator", icon: "C" },
   { href: "/portfolio", label: "Portfolio", icon: "P" },
-  { href: "/settings", label: "Settings", icon: "S" },
+  { href: "/settings", label: "Settings", icon: "S", isGear: true },
 ];
 
 export default function Navbar() {
@@ -22,8 +30,18 @@ export default function Navbar() {
   const [mobileOpen, setMobileOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
   const [userMenuOpen, setUserMenuOpen] = useState(false);
+  const [recentSearches, setRecentSearches] = useState([]);
+  const [showRecents, setShowRecents] = useState(false);
   const searchRef = useRef(null);
   const userMenuRef = useRef(null);
+
+  // Load recent searches from localStorage
+  useEffect(() => {
+    try {
+      const stored = JSON.parse(localStorage.getItem("ntrade_recent_searches") || "[]");
+      setRecentSearches(stored.slice(0, 5));
+    } catch { setRecentSearches([]); }
+  }, []);
 
   useEffect(() => {
     const onScroll = () => setScrolled(window.scrollY > 10);
@@ -36,6 +54,7 @@ export default function Navbar() {
     const handler = (e) => {
       if (searchRef.current && !searchRef.current.contains(e.target)) {
         setResults([]);
+        setShowRecents(false);
       }
       if (userMenuRef.current && !userMenuRef.current.contains(e.target)) {
         setUserMenuOpen(false);
@@ -47,7 +66,8 @@ export default function Navbar() {
 
   const handleSearch = async (val) => {
     setQuery(val);
-    if (!val.trim()) { setResults([]); return; }
+    if (!val.trim()) { setResults([]); setShowRecents(true); return; }
+    setShowRecents(false);
     try {
       const res = await API.get(`/search?q=${val}`);
       setResults((res.data || []).slice(0, 8));
@@ -57,7 +77,14 @@ export default function Navbar() {
   };
 
   const goToStock = (sym) => {
-    setQuery(""); setResults([]); setMobileOpen(false);
+    setQuery(""); setResults([]); setMobileOpen(false); setShowRecents(false);
+    // Save to recent searches
+    try {
+      const stored = JSON.parse(localStorage.getItem("ntrade_recent_searches") || "[]");
+      const updated = [sym, ...stored.filter(s => s !== sym)].slice(0, 5);
+      localStorage.setItem("ntrade_recent_searches", JSON.stringify(updated));
+      setRecentSearches(updated);
+    } catch {}
     router.push(`/stock/${sym}`);
   };
 
@@ -110,7 +137,7 @@ export default function Navbar() {
                   fontFamily: "'Space Grotesk', sans-serif",
                   fontWeight: 800,
                   fontSize: "clamp(0.95rem, 1.5vw, 1.2rem)",
-                  background: "linear-gradient(90deg, #00e5ff 0%, #40c4ff 100%)",
+                  background: "linear-gradient(90deg, var(--accent) 0%, var(--purple) 100%)",
                   WebkitBackgroundClip: "text",
                   WebkitTextFillColor: "transparent",
                   backgroundClip: "text",
@@ -132,7 +159,7 @@ export default function Navbar() {
             }}
             className="hidden md:flex"
           >
-            {NAV_LINKS.map(({ href, label }) => {
+            {NAV_LINKS.filter(l => !l.isGear).map(({ href, label }) => {
               const active = router.pathname === href;
               return (
                 <Link
@@ -206,6 +233,7 @@ export default function Navbar() {
                 onFocus={e => {
                   e.currentTarget.parentElement.style.borderColor = "var(--accent)";
                   e.currentTarget.parentElement.style.background = "var(--accent-dim)";
+                  if (!query.trim()) setShowRecents(true);
                 }}
                 onBlur={e => {
                   e.currentTarget.parentElement.style.borderColor = "var(--search-border)";
@@ -220,7 +248,7 @@ export default function Navbar() {
               )}
             </div>
 
-            {/* Dropdown */}
+            {/* Search Results Dropdown */}
             {results.length > 0 && (
               <div
                 style={{
@@ -275,7 +303,102 @@ export default function Navbar() {
                 ))}
               </div>
             )}
+
+            {/* Recent Searches Dropdown */}
+            {showRecents && results.length === 0 && !query.trim() && recentSearches.length > 0 && (
+              <div
+                style={{
+                  position: "absolute",
+                  top: "calc(100% + 8px)",
+                  left: 0,
+                  right: 0,
+                  background: "var(--dropdown-bg)",
+                  border: "1px solid var(--border-medium)",
+                  borderRadius: "14px",
+                  overflow: "hidden",
+                  boxShadow: "var(--shadow-dropdown)",
+                  zIndex: 200,
+                  animation: "fadeIn 0.15s ease",
+                }}
+              >
+                <div style={{ padding: "10px 16px", display: "flex", justifyContent: "space-between", alignItems: "center", borderBottom: "1px solid var(--border-subtle)" }}>
+                  <span style={{ fontSize: "0.68rem", fontWeight: 700, color: "var(--text-muted)", textTransform: "uppercase", letterSpacing: "0.08em" }}>Recent</span>
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      localStorage.removeItem("ntrade_recent_searches");
+                      setRecentSearches([]);
+                      setShowRecents(false);
+                    }}
+                    style={{ background: "none", border: "none", cursor: "pointer", color: "var(--text-muted)", fontSize: "0.68rem", fontWeight: 600, padding: 0, fontFamily: "inherit" }}
+                    onMouseEnter={e => e.currentTarget.style.color = "var(--red)"}
+                    onMouseLeave={e => e.currentTarget.style.color = "var(--text-muted)"}
+                  >Clear</button>
+                </div>
+                {recentSearches.map((sym) => (
+                  <div
+                    key={sym}
+                    onClick={() => goToStock(sym)}
+                    style={{
+                      padding: "11px 16px",
+                      cursor: "pointer",
+                      display: "flex",
+                      alignItems: "center",
+                      gap: "10px",
+                      borderBottom: "1px solid var(--border-subtle)",
+                      transition: "background 0.15s",
+                      fontSize: "0.875rem",
+                    }}
+                    onMouseEnter={e => e.currentTarget.style.background = "var(--hover-overlay)"}
+                    onMouseLeave={e => e.currentTarget.style.background = "transparent"}
+                  >
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--text-muted)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0 }}>
+                      <polyline points="1 4 1 10 7 10" />
+                      <path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10" />
+                    </svg>
+                    <span style={{ fontWeight: 600, color: "var(--accent)" }}>{sym}</span>
+                  </div>
+                ))}
+              </div>
+            )}
           </div>
+
+          {/* Settings Gear Icon */}
+          <Link
+            href="/settings"
+            className="hidden md:flex"
+            title="Settings"
+            style={{
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              width: "36px",
+              height: "36px",
+              borderRadius: "10px",
+              background: router.pathname === "/settings" ? "var(--accent-dim)" : "transparent",
+              border: router.pathname === "/settings" ? "1px solid var(--accent-glow)" : "1px solid transparent",
+              color: router.pathname === "/settings" ? "var(--accent)" : "var(--text-muted)",
+              transition: "all 0.25s ease",
+              flexShrink: 0,
+              textDecoration: "none",
+            }}
+            onMouseEnter={e => {
+              if (router.pathname !== "/settings") {
+                e.currentTarget.style.color = "var(--text-primary)";
+                e.currentTarget.style.background = "var(--hover-overlay)";
+                e.currentTarget.style.transform = "rotate(45deg)";
+              }
+            }}
+            onMouseLeave={e => {
+              if (router.pathname !== "/settings") {
+                e.currentTarget.style.color = "var(--text-muted)";
+                e.currentTarget.style.background = "transparent";
+                e.currentTarget.style.transform = "rotate(0deg)";
+              }
+            }}
+          >
+            <GearIcon size={18} />
+          </Link>
 
           {/* User Menu / Login */}
           {user ? (
@@ -302,13 +425,13 @@ export default function Navbar() {
                     width: "32px",
                     height: "32px",
                     borderRadius: "10px",
-                    background: "linear-gradient(135deg, #00e5ff 0%, #0091ea 100%)",
+                    background: "linear-gradient(135deg, var(--accent) 0%, var(--purple) 100%)",
                     display: "flex",
                     alignItems: "center",
                     justifyContent: "center",
                     fontSize: "0.8rem",
                     fontWeight: 800,
-                    color: "#080c1a",
+                    color: "var(--bg-primary)",
                     fontFamily: "'Space Grotesk', sans-serif",
                     flexShrink: 0,
                   }}
@@ -383,47 +506,10 @@ export default function Navbar() {
                     onMouseEnter={e => e.currentTarget.style.background = "var(--hover-overlay)"}
                     onMouseLeave={e => e.currentTarget.style.background = "transparent"}
                   >
-                    <span style={{ fontSize: "0.9rem", fontWeight: 700 }}>S</span>
+                    <GearIcon size={16} />
                     Settings
                   </button>
-                  {/* Theme toggle */}
-                  <button
-                    onClick={toggleTheme}
-                    style={{
-                      width: "100%",
-                      padding: "14px 18px",
-                      background: "transparent",
-                      border: "none",
-                      cursor: "pointer",
-                      textAlign: "left",
-                      fontSize: "0.875rem",
-                      fontWeight: 600,
-                      color: isDark ? "rgba(255,255,255,0.7)" : "#475569",
-                      fontFamily: "inherit",
-                      display: "flex",
-                      alignItems: "center",
-                      gap: "10px",
-                      transition: "background 0.15s",
-                      borderBottom: isDark ? "1px solid rgba(255,255,255,0.06)" : "1px solid rgba(0,0,0,0.06)",
-                    }}
-                    onMouseEnter={e => e.currentTarget.style.background = isDark ? "rgba(255,255,255,0.04)" : "rgba(0,0,0,0.03)"}
-                    onMouseLeave={e => e.currentTarget.style.background = "transparent"}
-                  >
-                    {isDark ? (
-                      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                        <circle cx="12" cy="12" r="5"/>
-                        <line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/>
-                        <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/>
-                        <line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/>
-                        <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/>
-                      </svg>
-                    ) : (
-                      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                        <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/>
-                      </svg>
-                    )}
-                    {isDark ? "Light Mode" : "Dark Mode"}
-                  </button>
+
                   {/* Logout */}
                   <button
                     onClick={() => { setUserMenuOpen(false); logout(); router.replace("/login"); }}
@@ -436,14 +522,14 @@ export default function Navbar() {
                       textAlign: "left",
                       fontSize: "0.875rem",
                       fontWeight: 600,
-                      color: "#ff5252",
+                      color: "var(--red)",
                       fontFamily: "inherit",
                       display: "flex",
                       alignItems: "center",
                       gap: "10px",
                       transition: "background 0.15s",
                     }}
-                    onMouseEnter={e => e.currentTarget.style.background = "rgba(255,23,68,0.06)"}
+                    onMouseEnter={e => e.currentTarget.style.background = "var(--red-dim)"}
                     onMouseLeave={e => e.currentTarget.style.background = "transparent"}
                   >
                     <span style={{ fontSize: "1rem" }}>⏻</span>
@@ -454,49 +540,18 @@ export default function Navbar() {
             </div>
           ) : (
             <>
-              {/* Theme toggle for non-logged-in */}
-              <button
-                onClick={toggleTheme}
-                style={{
-                  background: "var(--search-bg)",
-                  border: "1px solid var(--border-medium)",
-                  borderRadius: "10px",
-                  padding: "8px",
-                  cursor: "pointer",
-                  color: "var(--text-secondary)",
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "center",
-                  transition: "all 0.2s",
-                  flexShrink: 0,
-                }}
-                title={isDark ? "Switch to Light Mode" : "Switch to Dark Mode"}
-              >
-                {isDark ? (
-                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                    <circle cx="12" cy="12" r="5"/>
-                    <line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/>
-                    <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/>
-                    <line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/>
-                    <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/>
-                  </svg>
-                ) : (
-                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                    <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/>
-                  </svg>
-                )}
-              </button>
+
               <Link
                 href="/login"
                 style={{
                   padding: "8px 20px",
                   borderRadius: "10px",
-                  background: "linear-gradient(135deg, #00e5ff 0%, #0091ea 100%)",
-                  color: "#080c1a",
+                  background: "linear-gradient(135deg, var(--accent) 0%, var(--purple) 100%)",
+                  color: "var(--bg-primary)",
                   fontWeight: 700,
                   fontSize: "0.85rem",
                   textDecoration: "none",
-                  boxShadow: "0 4px 16px rgba(0,229,255,0.25)",
+                  boxShadow: "0 4px 16px var(--accent-glow)",
                   transition: "all 0.2s",
                   flexShrink: 0,
                 }}
@@ -549,7 +604,7 @@ export default function Navbar() {
           }}
           className="md:hidden"
         >
-          {NAV_LINKS.map(({ href, label, icon }) => {
+          {NAV_LINKS.map(({ href, label, icon, isGear }) => {
             const active = router.pathname === href;
             return (
               <Link
@@ -570,7 +625,7 @@ export default function Navbar() {
                   gap: "12px",
                 }}
               >
-                <span style={{ fontSize: "1.2rem" }}>{icon}</span>
+                {isGear ? <GearIcon size={20} /> : <span style={{ fontSize: "1.2rem" }}>{icon}</span>}
                 {label}
                 {active && <span style={{ marginLeft: "auto", fontSize: "0.75rem", color: "var(--accent)", opacity: 0.7 }}>●</span>}
               </Link>

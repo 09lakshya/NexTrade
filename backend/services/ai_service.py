@@ -4,6 +4,14 @@ import pandas as pd
 from textblob import TextBlob
 import requests
 from bs4 import BeautifulSoup
+import os
+
+try:
+    _yf_cache_dir = os.path.join(os.getenv("TEMP", "C:\\tmp"), "nextrade-yfinance-cache")
+    os.makedirs(_yf_cache_dir, exist_ok=True)
+    yf.set_tz_cache_location(_yf_cache_dir)
+except Exception:
+    pass
 
 YF_SYMBOL_OVERRIDES = {
     "TATAMOTORS": "TATAMOTORS.BO",
@@ -84,6 +92,58 @@ def analyze_sentiment(text):
         return 50
 
 
+def _safe_float(value, default=None):
+    try:
+        if value is None:
+            return default
+        value = float(value)
+        if np.isnan(value) or np.isinf(value):
+            return default
+        return value
+    except Exception:
+        return default
+
+
+def _news_text(item: dict) -> str:
+    content = item.get("content") or {}
+    title = item.get("title") or content.get("title") or ""
+    summary = (
+        item.get("summary")
+        or item.get("publisher")
+        or content.get("summary")
+        or content.get("description")
+        or ""
+    )
+    return f"{title} {summary}".strip()
+
+
+def _market_sentiment_proxy(symbol: str):
+    """Fallback when news text is unavailable; keeps neutral from meaning unknown."""
+    try:
+        stock = yf.Ticker(_get_working_ticker(symbol))
+        df = stock.history(period="3mo", interval="1d")
+        if df.empty or len(df) < 15:
+            return {"sentiment_score": 50, "news_count": 0, "impact": "neutral", "source": "none"}
+
+        close = df["Close"]
+        volume = df["Volume"]
+        one_month_return = close.iloc[-1] / close.iloc[-min(22, len(close))] - 1
+        one_week_return = close.iloc[-1] / close.iloc[-min(6, len(close))] - 1
+        volume_ratio = volume.iloc[-5:].mean() / volume.iloc[-20:].mean() if volume.iloc[-20:].mean() > 0 else 1
+
+        score = 50 + (one_month_return * 90) + (one_week_return * 70) + ((volume_ratio - 1) * 8)
+        score = max(25, min(75, score))
+        impact = "bullish" if score > 58 else "bearish" if score < 42 else "neutral"
+        return {
+            "sentiment_score": round(score, 2),
+            "news_count": 0,
+            "impact": impact,
+            "source": "market_proxy",
+        }
+    except Exception:
+        return {"sentiment_score": 50, "news_count": 0, "impact": "neutral", "source": "none"}
+
+
 def fetch_news_sentiment(symbol: str):
     """Fetch and analyze news sentiment for a stock"""
     try:
@@ -97,13 +157,15 @@ def fetch_news_sentiment(symbol: str):
             
             sentiments = []
             for item in news[:10]:  # Last 10 news items
-                title = item.get("title", "")
-                summary = item.get("summary", "")
-                text = f"{title} {summary}"
-                sentiment = analyze_sentiment(text)
-                sentiments.append(sentiment)
+                text = _news_text(item)
+                if text:
+                    sentiment = analyze_sentiment(text)
+                    sentiments.append(sentiment)
+
+            if not sentiments:
+                return _market_sentiment_proxy(symbol)
             
-            avg_sentiment = np.mean(sentiments) if sentiments else 50
+            avg_sentiment = float(np.mean(sentiments)) if sentiments else 50
             
             # Determine impact
             if avg_sentiment > 60:
@@ -114,37 +176,49 @@ def fetch_news_sentiment(symbol: str):
                 impact = "neutral"
             
             return {
-                "sentiment_score": round(avg_sentiment, 2),
+                "sentiment_score": float(round(avg_sentiment, 2)),
                 "news_count": len(sentiments),
                 "impact": impact,
-                "details": len(sentiments) > 0
+                "details": len(sentiments) > 0,
+                "source": "news",
             }
         except:
             # Fallback if news not available
-            return {"sentiment_score": 50, "news_count": 0, "impact": "neutral"}
+            return _market_sentiment_proxy(symbol)
     except Exception as e:
         print(f"News sentiment error: {e}")
-        return {"sentiment_score": 50, "news_count": 0, "impact": "neutral"}
+        return _market_sentiment_proxy(symbol)
 
 
 def get_fundamental_data(symbol: str):
     """Get fundamental data for a stock"""
     try:
         stock = yf.Ticker(_get_working_ticker(symbol))
-        info = stock.info
+        info = stock.get_info() or {}
+        fast_info = getattr(stock, "fast_info", {}) or {}
         
         fundamentals = {
-            "pe_ratio": info.get("trailingPE", None),
-            "pb_ratio": info.get("priceToBook", None),
-            "dividend_yield": info.get("dividendYield", 0),
-            "earnings_growth": info.get("earningsGrowth", 0),
-            "revenue_growth": info.get("revenueGrowth", 0),
-            "profit_margin": info.get("profitMargins", 0),
-            "debt_to_equity": info.get("debtToEquity", None),
-            "roa": info.get("returnOnAssets", 0),
-            "roe": info.get("returnOnEquity", 0),
-            "market_cap": info.get("marketCap", 0)
+            "pe_ratio": _safe_float(info.get("trailingPE")),
+            "pb_ratio": _safe_float(info.get("priceToBook")),
+            "dividend_yield": _safe_float(info.get("dividendYield"), 0),
+            "earnings_growth": _safe_float(info.get("earningsGrowth"), 0),
+            "revenue_growth": _safe_float(info.get("revenueGrowth"), 0),
+            "profit_margin": _safe_float(info.get("profitMargins"), 0),
+            "debt_to_equity": _safe_float(info.get("debtToEquity")),
+            "roa": _safe_float(info.get("returnOnAssets"), 0),
+            "roe": _safe_float(info.get("returnOnEquity"), 0),
+            "market_cap": _safe_float(info.get("marketCap") or fast_info.get("market_cap"), 0),
+            "data_points": 0,
         }
+
+        fundamentals["data_points"] = sum(
+            1 for key in [
+                "pe_ratio", "pb_ratio", "dividend_yield", "earnings_growth",
+                "revenue_growth", "profit_margin", "debt_to_equity", "roa",
+                "roe", "market_cap"
+            ]
+            if fundamentals.get(key) not in (None, 0)
+        )
         
         return fundamentals
     except Exception as e:
@@ -209,7 +283,35 @@ def calculate_fundamental_score(fundamentals: dict):
     except Exception as e:
         print(f"Fundamental scoring error: {e}")
     
+    if factors == 0:
+        return None
+
+    # Blend back toward neutral when only a few data points are available.
+    reliability = min(1, factors / 4)
+    score = 50 + ((score - 50) * reliability)
     return max(0, min(100, score))  # Clamp between 0-100
+
+
+def calculate_technical_quality_score(close, volume):
+    returns = close.pct_change().dropna()
+    if returns.empty:
+        return 50
+
+    momentum_3m = close.iloc[-1] / close.iloc[-min(63, len(close))] - 1
+    momentum_1m = close.iloc[-1] / close.iloc[-min(22, len(close))] - 1
+    volatility = returns.tail(60).std() * np.sqrt(252)
+    drawdown = close.iloc[-1] / close.tail(min(126, len(close))).max() - 1
+    avg_volume = volume.tail(min(20, len(volume))).mean()
+
+    score = 50
+    score += max(-18, min(18, momentum_3m * 80))
+    score += max(-10, min(10, momentum_1m * 70))
+    score -= max(0, min(12, (volatility - 0.25) * 25))
+    score += max(-8, min(4, drawdown * 20))
+    if avg_volume and avg_volume > 0:
+        score += 3
+
+    return max(20, min(80, score))
 
 
 def predict_stock(symbol: str):
@@ -261,6 +363,10 @@ def predict_stock(symbol: str):
         
         fundamentals = get_fundamental_data(symbol)
         fundamental_score = calculate_fundamental_score(fundamentals)
+        fundamental_source = "fundamentals"
+        if fundamental_score is None:
+            fundamental_score = calculate_technical_quality_score(close, volume)
+            fundamental_source = "technical_proxy"
 
         # ===== TREND DETECTION =====
         trend_score = 0
@@ -357,36 +463,33 @@ def predict_stock(symbol: str):
         # Calculate volatility
         volatility = close.pct_change().rolling(20).std().iloc[-1]
         
-        # Sentiment and fundamental adjustment
+        # Sentiment and fundamental adjustment. Keep these small; they should nudge,
+        # not dominate, a short-term price forecast.
         sentiment_factor = (news_sentiment - 50) / 100  # -0.5 to 0.5
         fundamental_factor = (fundamental_score - 50) / 100  # -0.5 to 0.5
-        
-        # Combined adjustment
-        combined_adjustment = (sentiment_factor * 0.3 + fundamental_factor * 0.4)
-        
-        # Predicted price based on trend and RSI with sentiment/fundamental boost
-        if trend == "BULLISH":
-            if rsi < 70:
-                predicted_price = current_price * (1 + volatility * 1.5 + combined_adjustment)
-            else:
-                predicted_price = current_price * (1 + volatility * 0.5 + combined_adjustment)
-        elif trend == "BEARISH":
-            if rsi > 30:
-                predicted_price = current_price * (1 - volatility * 1.5 + combined_adjustment)
-            else:
-                predicted_price = current_price * (1 - volatility * 0.5 + combined_adjustment)
-        else:
-            predicted_price = current_price * (1 + combined_adjustment)
+        momentum_5d = close.iloc[-1] / close.iloc[-min(6, len(close))] - 1
+        momentum_20d = close.iloc[-1] / close.iloc[-min(21, len(close))] - 1
+        mean_reversion = (current_middle - current_price) / current_price if current_price else 0
+
+        expected_move = (
+            momentum_5d * 0.30
+            + momentum_20d * 0.20
+            + mean_reversion * 0.15
+            + sentiment_factor * 0.025
+            + fundamental_factor * 0.035
+        )
+        max_move = max(0.015, min(0.08, volatility * 2.2))
+        expected_move = max(-max_move, min(max_move, expected_move))
+        predicted_price = current_price * (1 + expected_move)
 
         # ===== DAY CLOSE PREDICTION =====
         x = np.arange(len(close))
         y = close.values
         
-        coefficients = np.polyfit(x[-20:], y[-20:], 2)
-        slope = coefficients[0] * 2 + coefficients[1]
-        
-        remaining_steps = 8
-        day_close_prediction = current_price + slope * remaining_steps
+        coefficients = np.polyfit(x[-20:], y[-20:], 1)
+        slope = coefficients[0]
+        intraday_bias = expected_move * 0.35
+        day_close_prediction = current_price * (1 + intraday_bias) + slope * 0.35
         
         day_close_prediction = max(day_close_prediction, lower_bb.iloc[-1])
         day_close_prediction = min(day_close_prediction, upper_bb.iloc[-1])
@@ -403,11 +506,14 @@ def predict_stock(symbol: str):
             "macd": round(current_histogram, 4),
             "volatility": round(volatility * 100, 2),
             # New: News and Sentiment
-            "news_sentiment": round(news_sentiment, 2),
+            "news_sentiment": float(round(news_sentiment, 2)),
             "news_impact": news_data.get("impact", "neutral"),
             "news_count": news_data.get("news_count", 0),
+            "sentiment_source": news_data.get("source", "news"),
             # New: Fundamental Analysis
-            "fundamental_score": round(fundamental_score, 2),
+            "fundamental_score": float(round(fundamental_score, 2)),
+            "fundamental_source": fundamental_source,
+            "fundamental_data_points": fundamentals.get("data_points", 0),
             "pe_ratio": fundamentals.get("pe_ratio"),
             "earnings_growth": fundamentals.get("earnings_growth"),
             "revenue_growth": fundamentals.get("revenue_growth"),

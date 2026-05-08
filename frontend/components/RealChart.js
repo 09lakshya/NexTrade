@@ -8,7 +8,7 @@ import {
   Filler,
 } from "chart.js";
 import { Line } from "react-chartjs-2";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 
 ChartJS.register(
   LineElement,
@@ -19,11 +19,64 @@ ChartJS.register(
   Filler,
 );
 
+// Resolve a CSS variable to its computed value (Chart.js can't use var() directly)
+function getCSSVar(varName, fallback = "#888") {
+  if (typeof window === "undefined") return fallback;
+  const val = getComputedStyle(document.documentElement)
+    .getPropertyValue(varName)
+    .trim();
+  return val || fallback;
+}
+
 export default function RealChart({ data }) {
   // 🔥 FORCE VALID DATA
   const cleaned = (data || []).filter(
     (d) => d && d.Date && d.Close !== null && d.Close !== undefined,
   );
+
+  // Resolve CSS vars to real colors for Chart.js (re-resolve on theme change)
+  const [colors, setColors] = useState({
+    green: "#00c896",
+    red: "#ff4d6a",
+    greenDim: "rgba(0,200,150,0.08)",
+    redDim: "rgba(255,77,106,0.08)",
+    bgCard: "#111827",
+    bgPrimary: "#080c1a",
+    textPrimary: "#f1f5f9",
+    textSecondary: "#94a3b8",
+    borderSubtle: "rgba(255,255,255,0.06)",
+  });
+
+  useEffect(() => {
+    const resolve = () => {
+      setColors({
+        green: getCSSVar("--green", "#00c896"),
+        red: getCSSVar("--red", "#ff4d6a"),
+        greenDim: getCSSVar("--green-dim", "rgba(0,200,150,0.08)"),
+        redDim: getCSSVar("--red-dim", "rgba(255,77,106,0.08)"),
+        bgCard: getCSSVar("--bg-card", "#111827"),
+        bgPrimary: getCSSVar("--bg-primary", "#080c1a"),
+        textPrimary: getCSSVar("--text-primary", "#f1f5f9"),
+        textSecondary: getCSSVar("--text-secondary", "#94a3b8"),
+        borderSubtle: getCSSVar("--border-subtle", "rgba(255,255,255,0.06)"),
+      });
+    };
+
+    resolve();
+
+    // Re-resolve when theme changes (watches data-theme attribute)
+    const observer = new MutationObserver((mutations) => {
+      for (const m of mutations) {
+        if (m.attributeName === "data-theme") {
+          resolve();
+          break;
+        }
+      }
+    });
+    observer.observe(document.documentElement, { attributes: true });
+
+    return () => observer.disconnect();
+  }, []);
 
   if (cleaned.length === 0) {
     return <div className="text-gray-400">No chart data</div>;
@@ -34,11 +87,9 @@ export default function RealChart({ data }) {
   const lastPrice = Number(cleaned[cleaned.length - 1].Close);
   const isBullish = lastPrice >= firstPrice;
 
-  // Set colors based on trend
-  const lineColor = isBullish ? "#00ff88" : "#ff3366";
-  const bgColor = isBullish
-    ? "rgba(0, 255, 136, 0.15)"
-    : "rgba(255, 51, 102, 0.15)";
+  // Set colors based on trend — using resolved values
+  const lineColor = isBullish ? colors.green : colors.red;
+  const bgColor = isBullish ? colors.greenDim : colors.redDim;
 
   let isIntraday = false;
   if (cleaned.length > 2) {
@@ -81,11 +132,11 @@ export default function RealChart({ data }) {
     plugins: {
       tooltip: {
         enabled: true,
-        backgroundColor: "rgba(10, 14, 39, 0.95)",
+        backgroundColor: colors.bgCard,
         borderColor: lineColor,
         borderWidth: 2,
         titleColor: lineColor,
-        bodyColor: "#ffffff",
+        bodyColor: colors.textPrimary,
         padding: 12,
         borderRadius: 8,
         titleFont: {
@@ -108,10 +159,10 @@ export default function RealChart({ data }) {
     scales: {
       x: {
         grid: {
-          color: "rgba(255, 255, 255, 0.05)",
+          color: colors.borderSubtle,
         },
         ticks: {
-          color: "rgba(255, 255, 255, 0.7)",
+          color: colors.textSecondary,
           font: {
             size: 11,
           },
@@ -119,10 +170,10 @@ export default function RealChart({ data }) {
       },
       y: {
         grid: {
-          color: "rgba(255, 255, 255, 0.05)",
+          color: colors.borderSubtle,
         },
         ticks: {
-          color: "rgba(255, 255, 255, 0.7)",
+          color: colors.textSecondary,
           font: {
             size: 11,
           },
@@ -142,12 +193,12 @@ export default function RealChart({ data }) {
         data: prices,
         borderColor: lineColor,
         backgroundColor: bgColor,
-        fill: false,
+        fill: true,
         tension: 0,
         pointRadius: 0,
         pointHoverRadius: 8,
         pointBackgroundColor: lineColor,
-        pointBorderColor: "#ffffff",
+        pointBorderColor: colors.bgPrimary,
         pointBorderWidth: 2,
       },
     ],
